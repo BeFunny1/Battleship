@@ -1,11 +1,13 @@
-import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMainWindow
+
+from work_with_confg.config_handler import ConfigHandler
 
 
 class ConfigurationWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.config_reader = ConfigHandler()
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
 
@@ -39,13 +41,9 @@ class ConfigurationWindow(QMainWindow):
 
     def create_inscriptions(self) -> [QtWidgets.QLabel]:
         labels = []
-        inscriptions_and_geometric_data = {
-            'Задайте нужные конфигурации.': [10, 0, 380, 40],
-            'Уровень AI противника:': [30, 150, 160, 15],
-            'Выберите конфигурацию поля:': [30, 50, 260, 15],
-            'Размер:': [50, 80, 60, 20],
-            'Свойство:': [50, 110, 60, 20]
-        }
+        inscriptions_and_geometric_data \
+            = self.config_reader.read_config_file(
+              'inscriptions_and_geometric_data_configuration_window')
         for inscription in inscriptions_and_geometric_data.keys():
             label = QtWidgets.QLabel(self.central_widget)
             x, y, width, height = inscriptions_and_geometric_data[inscription]
@@ -87,9 +85,8 @@ class ConfigurationWindow(QMainWindow):
         combo_box = QtWidgets.QComboBox(self.central_widget)
         combo_box.setGeometry(QtCore.QRect(120, 80, 80, 20))
         combo_box.setObjectName('comboBox')
-        items = ['10x10', '16х16', '32х32',
-                 '64х64', '128х128', '256х256',
-                 '512х512', '1024х1024', '2048х2048']
+        items = self.config_reader.read_config_file(
+                'field_size_configuration_window')
         for item in items:
             combo_box.addItem(item)
         return combo_box
