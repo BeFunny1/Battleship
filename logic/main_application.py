@@ -17,9 +17,9 @@ class Application:
         self.config_window.hide()
         field_size = list(map(int, permission.split('x')))
 
-        self.arrange_the_ships = ArrangeTheShipsLogic(field_size, three_dimensional_map)
-
-        print(permission, three_dimensional_map, ai_level)
+        self.arrange_the_ships \
+            = ArrangeTheShipsLogic(
+              field_size, three_dimensional_map)
 
 
 if __name__ == '__main__':

@@ -18,17 +18,36 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
+        self.button_del_activity = False
         self.field_button = None
+        self.label_fields = None
+        self.activate_delete_label = None
+
+        self.customer = None
+
+    def establish_communication(self, customer):
+        self.customer = customer
 
     def setupUi(self) -> None:
         self.customize_window()
         self.create_inscriptions()
-        self.create_label_fields()
+        self.label_fields, self.activate_delete_label \
+            = self.create_label_fields()
         self.create_del_button()
         self.create_start_game_button()
         if self.three_dimensional:
             self.create_button_to_change_levels()
         self.field_button = self.create_field_buttons()
+
+    def update_info_on_label(self, data: dict) -> None:
+        translator = {
+            4: 'battleship',
+            3: 'cruiser',
+            2: 'destroyer',
+            1: 'boat'
+        }
+        for key in data.keys():
+            self.label_fields[translator[key]].setText(str(data[key]))
 
     def create_button_to_change_levels(self) -> QtWidgets.QPushButton:
         button_to_change_levels = QtWidgets.QPushButton(self.central_widget)
@@ -66,14 +85,16 @@ class ArrangeTheShipsWindow(QMainWindow):
         start_y = 130
         for x in range(self.field_size[0]):
             field[0][x] = {}
-            field[1][x] = {}
+            if self.three_dimensional:
+                field[1][x] = {}
             for y in range(self.field_size[1]):
                 button = QtWidgets.QPushButton(self.central_widget)
                 button.setGeometry(QtCore.QRect(
                     start_x + 20 * x, start_y + 20 * y, 20, 20))
                 button.setObjectName(
                     f'button_main_field_{str(x)}_{str(y)}')
-                button.setEnabled(False)
+                button.clicked.connect(
+                    partial(self.customer, 0, (x, y)))
                 field[0][x][y] = button
                 if self.three_dimensional:
                     sublevel_button = QtWidgets.QPushButton(self.central_widget)
@@ -81,6 +102,8 @@ class ArrangeTheShipsWindow(QMainWindow):
                         start_x + 20 * x, start_y + 20 * y, 20, 20))
                     sublevel_button.setObjectName(
                         f'button_sublevel_field_{str(x)}_{str(y)}')
+                    sublevel_button.clicked.connect(
+                        partial(self.customer, 1, (x, y)))
                     sublevel_button.hide()
                     field[1][x][y] = sublevel_button
         return field
@@ -100,7 +123,21 @@ class ArrangeTheShipsWindow(QMainWindow):
         del_button.setGeometry(QtCore.QRect(410, 20, 81, 51))
         del_button.setObjectName("del_button")
         del_button.setText('DEL')
+        del_button.clicked.connect(self.del_button_event)
         return del_button
+
+    def update_buttons_text(self, level: int, x: int, y: int, text: str) -> None:
+        self.field_button[level][x][y].setText(text)
+
+    def del_button_event(self) -> None:
+        reverse_phrases = {
+            'активирован': 'деактивирован',
+            'деактивирован': 'активирован'
+        }
+        current_text = self.activate_delete_label.text()
+        new_text = reverse_phrases[current_text]
+        self.activate_delete_label.setText(new_text)
+        self.button_del_activity = not self.button_del_activity
 
     def create_label_fields(self) -> ({str, QtWidgets.QLabel}, QtWidgets.QLabel):
         data_for_fields = self.config_reader.read_config_file(
@@ -114,13 +151,13 @@ class ArrangeTheShipsWindow(QMainWindow):
             ship_counter.setObjectName("ship")
             ship_counter.setText('0')
             label_fields[ship] = ship_counter
-        activate_delete_function = QtWidgets.QLabel(self.central_widget)
+        activate_delete_label = QtWidgets.QLabel(self.central_widget)
         x, y, width, height = data_for_fields['sub_level_activate']
-        activate_delete_function.setGeometry(QtCore.QRect(x, y, width, height))
-        activate_delete_function.setAlignment(QtCore.Qt.AlignCenter)
-        activate_delete_function.setObjectName("ship")
-        activate_delete_function.setText('деактивирован')
-        return label_fields, activate_delete_function
+        activate_delete_label.setGeometry(QtCore.QRect(x, y, width, height))
+        activate_delete_label.setAlignment(QtCore.Qt.AlignCenter)
+        activate_delete_label.setObjectName("ship")
+        activate_delete_label.setText('деактивирован')
+        return label_fields, activate_delete_label
 
     def create_inscriptions(self) -> None:
         inscriptions_and_geometric_data \
