@@ -2,6 +2,9 @@ from objects.ship import Ship
 
 
 class Field:
+    def __init__(self, related_entity: list):
+        self.ships = self.parse_related_entity_to_the_ships(related_entity)
+
     @staticmethod
     def parse_related_entity_to_the_ships(related_entity: list) -> list:
         ships = []

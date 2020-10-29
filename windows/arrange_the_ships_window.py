@@ -83,7 +83,7 @@ class ArrangeTheShipsWindow(QMainWindow):
                 else:
                     field[x][y].hide()
 
-    def create_field_buttons(self) -> (dict, dict):
+    def create_field_buttons(self) -> dict:
         field = {0: {}, 1: {}}
         start_x = self.width() // 2 - (self.field_size[0] // 2 * 20)
         start_y = 130

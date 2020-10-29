@@ -6,6 +6,7 @@ from windows.arrange_the_ships_window import ArrangeTheShipsWindow
 
 class ArrangeTheShipsLogic:
     def __init__(self, field_size: (int, int), three_dimensional: bool, for_test: bool):
+        self.for_test = for_test
         self.field_size = field_size
         self.three_dimensional = three_dimensional
         self.arrange_the_ships_window = None
@@ -17,7 +18,11 @@ class ArrangeTheShipsLogic:
 
     def processing_options_for_the_location_of_the_ship(
             self, level: int, point: (int, int)):
-        activate_del = self.arrange_the_ships_window.button_del_activity
+        if not self.for_test:
+            activate_del = self.arrange_the_ships_window.button_del_activity
+        else:
+            activate_del = False
+
         if not self.is_a_related_entity(level, point):
             if len(self.stack_related_entity) > 0:
                 self.related_entity_placement(level, point)
@@ -26,10 +31,11 @@ class ArrangeTheShipsLogic:
                 self.delete_related_entity(level, point)
             else:
                 self.try_to_change_related_entity_axis(level, point)
-        self.update_number_of_related_entity()
 
-        allow = len(self.stack_related_entity) == 0
-        self.open_possibility_of_start_the_game(allow=allow)
+        if not self.for_test:
+            self.update_number_of_related_entity()
+            allow = len(self.stack_related_entity) == 0
+            self.open_possibility_of_start_the_game(allow=allow)
 
     def open_possibility_of_start_the_game(self, allow: bool):
         self.arrange_the_ships_window.switch_start_game_button(allow)
@@ -109,7 +115,8 @@ class ArrangeTheShipsLogic:
         for point in related_entity:
             x, y = point
             self.field_for_related_entity[level][x][y] = 0
-            self.arrange_the_ships_window.update_buttons_text(level, x, y, '')
+            if not self.for_test:
+                self.arrange_the_ships_window.update_buttons_text(level, x, y, '')
 
     def find_related_entity_on_the_field(self, level: int, axis: str, point: (int, int), related_entity_size: int):
         related_entity = []
@@ -158,7 +165,8 @@ class ArrangeTheShipsLogic:
         for point in related_entity:
             x, y = point
             self.field_for_related_entity[level][x][y] = len(related_entity)
-            self.arrange_the_ships_window.update_buttons_text(level, x, y, str(len(related_entity)))
+            if not self.for_test:
+                self.arrange_the_ships_window.update_buttons_text(level, x, y, str(len(related_entity)))
 
     @staticmethod
     def get_possible_related_entity_subject_to_axis(
