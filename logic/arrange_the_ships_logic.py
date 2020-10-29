@@ -5,13 +5,14 @@ from windows.arrange_the_ships_window import ArrangeTheShipsWindow
 
 
 class ArrangeTheShipsLogic:
-    def __init__(self, field_size: (int, int), three_dimensional: bool):
+    def __init__(self, field_size: (int, int), three_dimensional: bool, for_test: bool):
         self.field_size = field_size
         self.three_dimensional = three_dimensional
         self.arrange_the_ships_window = None
+        self.field_for_related_entity = None
         self.stack_related_entity = []
-        self.field_for_related_entity = self.create_start_field_for_related_entity()
-        self.create_an_environment()
+        if not for_test:
+            self.create_an_environment()
 
     def processing_options_for_the_location_of_the_ship(
             self, level: int, point: (int, int)):
@@ -88,20 +89,24 @@ class ArrangeTheShipsLogic:
         related_entity = []
         first_point = point
         if axis == 'x':
-            while self.is_a_related_entity(level, first_point):
-                if first_point[0] - 1 < 0:
+            while True:
+                if first_point[0] - 1 < 0 or not self.is_a_related_entity(
+                        level, (first_point[0] - 1, first_point[1])):
                     break
-                first_point = first_point[0] - 1, first_point[1]
+                else:
+                    first_point = first_point[0] - 1, first_point[1]
             for i in range(related_entity_size):
-                point = first_point[0] + 1 + i, first_point[1]
+                point = first_point[0] + i, first_point[1]
                 related_entity.append(point)
         else:
-            while self.is_a_related_entity(level, first_point):
-                if first_point[1] - 1 < 0:
+            while True:
+                if first_point[1] - 1 < 0 or not self.is_a_related_entity(
+                        level, (first_point[0], first_point[1] - 1)):
                     break
-                first_point = first_point[0], first_point[1] - 1
+                else:
+                    first_point = first_point[0], first_point[1] - 1
             for i in range(related_entity_size):
-                point = first_point[0], first_point[1] + 1 + i
+                point = first_point[0], first_point[1] + i
                 related_entity.append(point)
         return related_entity
 
@@ -180,6 +185,7 @@ class ArrangeTheShipsLogic:
         return start_field
 
     def create_an_environment(self):
+        self.field_for_related_entity = self.create_start_field_for_related_entity()
         self.create_window()
 
         number_of_cells = self.field_size[0] * self.field_size[1]

@@ -19,7 +19,7 @@ class Application:
 
         self.arrange_the_ships \
             = ArrangeTheShipsLogic(
-              field_size, three_dimensional_map)
+              field_size, three_dimensional_map, for_test=False)
 
 
 if __name__ == '__main__':
