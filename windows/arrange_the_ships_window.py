@@ -25,9 +25,11 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.start_game_button = None
 
         self.customer = None
+        self.exit_the_window = None
 
-    def establish_communication(self, customer):
+    def establish_communication(self, customer, exit_the_window):
         self.customer = customer
+        self.exit_the_window = exit_the_window
 
     def setupUi(self) -> None:
         self.customize_window()
@@ -121,6 +123,7 @@ class ArrangeTheShipsWindow(QMainWindow):
         start_game_button.setObjectName("start_game_button")
         start_game_button.setText('Начать игру')
         start_game_button.setEnabled(False)
+        start_game_button.clicked.connect(self.exit_the_window)
         return start_game_button
 
     def create_del_button(self) -> QtWidgets.QPushButton:

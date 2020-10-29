@@ -11,6 +11,7 @@ class ArrangeTheShipsLogic:
         self.arrange_the_ships_window = None
         self.field_for_related_entity = None
         self.stack_related_entity = []
+        self.customer = None
         if not for_test:
             self.create_an_environment()
 
@@ -28,10 +29,35 @@ class ArrangeTheShipsLogic:
         self.update_number_of_related_entity()
 
         allow = len(self.stack_related_entity) == 0
-        self.start_the_game(allow=allow)
+        self.open_possibility_of_start_the_game(allow=allow)
 
-    def start_the_game(self, allow: bool):
+    def open_possibility_of_start_the_game(self, allow: bool):
         self.arrange_the_ships_window.switch_start_game_button(allow)
+
+    def go_to_the_next_stage(self):
+        information_about_all_related_entity \
+            = self.get_information_about_all_related_entity()
+        self.customer(information_about_all_related_entity)
+
+    def hide_window(self):
+        self.arrange_the_ships_window.hide()
+
+    def establish_communication(self, customer) -> None:
+        self.customer = customer
+
+    def get_information_about_all_related_entity(self) -> list:
+        information = []
+        for level in self.field_for_related_entity.keys():
+            for x in self.field_for_related_entity[level]:
+                for y in self.field_for_related_entity[level][x]:
+                    if self.is_a_related_entity(level, (x, y)):
+                        axis = self.determine_axis(level, (x, y))
+                        related_entity_size = self.field_for_related_entity[level][x][y]
+                        related_entity = self.find_related_entity_on_the_field(
+                            level, axis, (x, y), related_entity_size)
+                        information.append((level, related_entity))
+                        self.erase_the_related_entity_from_the_field(level, related_entity)
+        return information
 
     def try_to_change_related_entity_axis(self, level: int, point: (int, int)):
         x, y = point
@@ -111,6 +137,7 @@ class ArrangeTheShipsLogic:
         return related_entity
 
     def determine_axis(self, level: int, point: (int, int)) -> str:
+        standard_axis = 'x'
         x, y = point
         neighbors = {
             'x': [(x - 1, y), (x + 1, y)],
@@ -121,6 +148,7 @@ class ArrangeTheShipsLogic:
                 if 0 <= option[0] <= self.field_size[0] - 1 and 0 <= option[1] <= self.field_size[1] - 1:
                     if self.is_a_related_entity(level, option):
                         return axis
+        return standard_axis
 
     def is_a_related_entity(self, level: int, point: (int, int)) -> bool:
         x, y = point
@@ -199,7 +227,7 @@ class ArrangeTheShipsLogic:
         self.arrange_the_ships_window \
             = ArrangeTheShipsWindow(self.field_size, self.three_dimensional)
         self.arrange_the_ships_window.establish_communication(
-            self.processing_options_for_the_location_of_the_ship)
+            self.processing_options_for_the_location_of_the_ship, self.go_to_the_next_stage)
         self.arrange_the_ships_window.setupUi()
         self.arrange_the_ships_window.show()
 
