@@ -22,6 +22,7 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.field_button = None
         self.label_fields = None
         self.activate_delete_label = None
+        self.start_game_button = None
 
         self.customer = None
 
@@ -34,7 +35,8 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.label_fields, self.activate_delete_label \
             = self.create_label_fields()
         self.create_del_button()
-        self.create_start_game_button()
+        self.start_game_button \
+            = self.create_start_game_button()
         if self.three_dimensional:
             self.create_button_to_change_levels()
         self.field_button = self.create_field_buttons()
@@ -107,6 +109,9 @@ class ArrangeTheShipsWindow(QMainWindow):
                     sublevel_button.hide()
                     field[1][x][y] = sublevel_button
         return field
+
+    def switch_start_game_button(self, toggle: bool):
+        self.start_game_button.setEnabled(toggle)
 
     def create_start_game_button(self) -> QtWidgets.QPushButton:
         start_game_button = QtWidgets.QPushButton(self.central_widget)

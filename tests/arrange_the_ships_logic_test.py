@@ -22,7 +22,7 @@ class ArrangeTheShipsLogicTest(unittest.TestCase):
                 2: 3 * multiplicity,
                 1: 4 * multiplicity
             }
-            actual = self.arrange_the_ships_logic.calculate_the_number_of_ships_on_the_field(number_of_cells[index])
+            actual = self.arrange_the_ships_logic.calculate_the_number_of_related_entity_on_the_field(number_of_cells[index])
             self.assertEqual(expected, actual)
 
 
