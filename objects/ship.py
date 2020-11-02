@@ -1,9 +1,10 @@
-from copy import copy
+from dataclasses import dataclass
+from typing import Tuple, List
 
 
+@dataclass
 class Ship:
-    def __init__(self, level: int, size: int, position: [], alive: True):
-        self.level = level
-        self.size = size
-        self.position = copy(position)
-        self.alive = alive
+    level: int
+    size: int
+    position: List[Tuple[int, int]]
+    alive: bool
