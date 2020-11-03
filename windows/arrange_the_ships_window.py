@@ -1,5 +1,6 @@
 import sys
 from functools import partial
+from typing import Dict, List, Tuple
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMainWindow
@@ -18,9 +19,13 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
+        self.labels_first_lvl = None
+        self.labels_second_lvl = None
+
         self.button_del_activity = False
         self.field_button = None
-        self.label_fields = None
+        self.label_fields_first_level = None
+        self.label_fields_second_level = None
         self.activate_delete_label = None
         self.start_game_button = None
 
@@ -33,8 +38,9 @@ class ArrangeTheShipsWindow(QMainWindow):
 
     def setupUi(self) -> None:
         self.customize_window()
-        self.create_inscriptions()
-        self.label_fields, self.activate_delete_label \
+        self.labels_first_lvl, self.labels_second_lvl \
+            = self.create_inscriptions()
+        self.label_fields_first_level, self.label_fields_second_level, self.activate_delete_label \
             = self.create_label_fields()
         self.create_del_button()
         self.start_game_button \
@@ -43,15 +49,23 @@ class ArrangeTheShipsWindow(QMainWindow):
             self.create_button_to_change_levels()
         self.field_button = self.create_field_buttons()
 
-    def update_info_on_label(self, data: dict) -> None:
-        translator = {
+    def update_info_on_label(self, data_first_lvl: dict, data_second_lvl: dict) -> None:
+        translator_first_lvl = {
             4: 'battleship',
             3: 'cruiser',
             2: 'destroyer',
             1: 'boat'
         }
-        for key in data.keys():
-            self.label_fields[translator[key]].setText(str(data[key]))
+        translator_second_lvl = {
+            4: 'nuclear submarine',
+            3: 'large submarine',
+            2: 'medium submarine',
+            1: 'ultra-small submarine'
+        }
+        for key in data_first_lvl.keys():
+            self.label_fields_first_level[translator_first_lvl[key]].setText(str(data_first_lvl[key]))
+            if self.three_dimensional:
+                self.label_fields_second_level[translator_second_lvl[key]].setText(str(data_second_lvl[key]))
 
     def create_button_to_change_levels(self) -> QtWidgets.QPushButton:
         button_to_change_levels = QtWidgets.QPushButton(self.central_widget)
@@ -73,6 +87,28 @@ class ArrangeTheShipsWindow(QMainWindow):
 
         self.change_the_display_of_buttons(self.field_button[1], show=result)
         self.change_the_display_of_buttons(self.field_button[0], show=not result)
+
+        self.change_the_display_changed_labels(self.label_fields_second_level, show=result)
+        self.change_the_display_changed_labels(self.label_fields_first_level, show=not result)
+
+        self.change_the_display_unchanged_labels(self.labels_second_lvl, show=result)
+        self.change_the_display_unchanged_labels(self.labels_first_lvl, show=not result)
+
+    @staticmethod
+    def change_the_display_unchanged_labels(data: List[QtWidgets.QLabel], show: bool) -> None:
+        for label in data:
+            if show:
+                label.show()
+            else:
+                label.hide()
+
+    @staticmethod
+    def change_the_display_changed_labels(data: Dict[str, QtWidgets.QLabel], show: bool) -> None:
+        for label in data.keys():
+            if show:
+                data[label].show()
+            else:
+                data[label].hide()
 
     @staticmethod
     def change_the_display_of_buttons(field: dict, show: bool) -> None:
@@ -147,37 +183,68 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.activate_delete_label.setText(new_text)
         self.button_del_activity = not self.button_del_activity
 
-    def create_label_fields(self) -> ({str, QtWidgets.QLabel}, QtWidgets.QLabel):
+    def create_label_fields(self) -> Tuple[Dict[str, QtWidgets.QLabel], Dict[str, QtWidgets.QLabel], QtWidgets.QLabel]:
         data_for_fields = self.config_reader.read_config_file(
                           'label_field_arrange_the_ships_window')
-        label_fields = {}
-        for ship in data_for_fields['ships']:
-            x, y, width, height = data_for_fields['ships'][ship]
-            ship_counter = QtWidgets.QLabel(self.central_widget)
-            ship_counter.setGeometry(QtCore.QRect(x, y, width, height))
-            ship_counter.setAlignment(QtCore.Qt.AlignCenter)
-            ship_counter.setObjectName("ship")
-            ship_counter.setText('0')
-            label_fields[ship] = ship_counter
+        label_fields_first_level: Dict[str, QtWidgets.QLabel] = {}
+        label_fields_second_level: Dict[str, QtWidgets.QLabel] = {}
+
+        label_fields_first_level = \
+            self.create_changed_labels(data_for_fields['ships'], hide=False)
+        if self.three_dimensional:
+            label_fields_second_level = \
+                self.create_changed_labels(data_for_fields['submarine'], hide=True)
         activate_delete_label = QtWidgets.QLabel(self.central_widget)
         x, y, width, height = data_for_fields['sub_level_activate']
         activate_delete_label.setGeometry(QtCore.QRect(x, y, width, height))
         activate_delete_label.setAlignment(QtCore.Qt.AlignCenter)
         activate_delete_label.setObjectName("ship")
         activate_delete_label.setText('деактивирован')
-        return label_fields, activate_delete_label
+        return label_fields_first_level, label_fields_second_level, activate_delete_label
 
-    def create_inscriptions(self) -> None:
+    def create_changed_labels(self, data: Dict[str, List[int]], hide: bool) -> Dict[str, QtWidgets.QLabel]:
+        label_fields: Dict[str, QtWidgets.QLabel] = {}
+        for ship in data:
+            x, y, width, height = data[ship]
+            ship_counter = QtWidgets.QLabel(self.central_widget)
+            ship_counter.setGeometry(QtCore.QRect(x, y, width, height))
+            ship_counter.setAlignment(QtCore.Qt.AlignCenter)
+            ship_counter.setObjectName("ship")
+            ship_counter.setText('0')
+            if hide:
+                ship_counter.hide()
+            label_fields[ship] = ship_counter
+        return label_fields
+
+    def create_inscriptions(self) -> Tuple[List[QtWidgets.QLabel], List[QtWidgets.QLabel]]:
         inscriptions_and_geometric_data \
             = self.config_reader.read_config_file(
               'inscriptions_and_geometric_data_arrange_the_ships_window')
-        for inscription in inscriptions_and_geometric_data:
-            x, y, width, height = inscriptions_and_geometric_data[inscription]
+        self.create_unchanged_labels(
+            inscriptions_and_geometric_data['general_labels'], hide=False)
+        labels_first_lvl: List[QtWidgets.QLabel] = []
+        labels_second_lvl: List[QtWidgets.QLabel] = []
+
+        labels_first_lvl = self.create_unchanged_labels(
+              inscriptions_and_geometric_data['ships'], hide=False)
+        if self.three_dimensional:
+            labels_second_lvl = self.create_unchanged_labels(
+                inscriptions_and_geometric_data['submarine'], hide=True)
+        return labels_first_lvl, labels_second_lvl
+
+    def create_unchanged_labels(self, data: Dict[str, List[int]], hide: bool) -> List[QtWidgets.QLabel]:
+        labels: List[QtWidgets.QLabel] = []
+        for inscription in data:
+            x, y, width, height = data[inscription]
             label = QtWidgets.QLabel(self.central_widget)
             label.setText(inscription)
             label.setGeometry(QtCore.QRect(x, y, width, height))
             label.setObjectName("label")
             label.setWordWrap(True)
+            if hide:
+                label.hide()
+            labels.append(label)
+        return labels
 
     def customize_window(self):
         window_weight, window_height = self.calculate_window_size()

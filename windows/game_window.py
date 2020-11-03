@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Dict, List, Tuple
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QMainWindow
@@ -17,6 +18,8 @@ class GameWindow(QMainWindow):
         self.button_to_change_level = None
         self.labels_field = None
         self.player_shot_handler = None
+        self.labels_first_lvl = None
+        self.labels_second_lvl = None
 
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
@@ -27,7 +30,7 @@ class GameWindow(QMainWindow):
         self.player_buttons = self.create_field_buttons_player()
         self.enemy_buttons = self.create_field_buttons_enemy()
 
-        # self.create_inscriptions()
+        self.labels_first_lvl, self.labels_second_lvl = self.create_inscriptions()
         # self.labels_field = self.create_label_fields()
 
         if self.three_dimensional:
@@ -56,17 +59,35 @@ class GameWindow(QMainWindow):
             label_fields[ship] = ship_counter
         return label_fields
 
-    def create_inscriptions(self) -> None:
+    def create_inscriptions(self) -> Tuple[List[QtWidgets.QLabel], List[QtWidgets.QLabel]]:
         inscriptions_and_geometric_data \
             = self.config_reader.read_config_file(
               'inscriptions_and_geometric_data_game_window')
-        for inscription in inscriptions_and_geometric_data:
-            x, y, width, height = inscriptions_and_geometric_data[inscription]
+        self.create_unchanged_labels(
+            inscriptions_and_geometric_data['general_labels'], hide=False)
+        labels_first_lvl: List[QtWidgets.QLabel] = []
+        labels_second_lvl: List[QtWidgets.QLabel] = []
+
+        labels_first_lvl = self.create_unchanged_labels(
+            inscriptions_and_geometric_data['ships'], hide=False)
+        if self.three_dimensional:
+            labels_second_lvl = self.create_unchanged_labels(
+                inscriptions_and_geometric_data['submarine'], hide=True)
+        return labels_first_lvl, labels_second_lvl
+
+    def create_unchanged_labels(self, data: Dict[str, List[int]], hide: bool) -> List[QtWidgets.QLabel]:
+        labels: List[QtWidgets.QLabel] = []
+        for inscription in data:
+            x, y, width, height = data[inscription]
             label = QtWidgets.QLabel(self.central_widget)
             label.setText(inscription)
             label.setGeometry(QtCore.QRect(x, y, width, height))
             label.setObjectName("label")
             label.setWordWrap(True)
+            if hide:
+                label.hide()
+            labels.append(label)
+        return labels
 
     def create_button_to_change_levels(self) -> QtWidgets.QPushButton:
         button_to_change_levels = QtWidgets.QPushButton(self.central_widget)
@@ -91,6 +112,17 @@ class GameWindow(QMainWindow):
 
         self.change_the_display_of_buttons(self.enemy_buttons[1], show=result)
         self.change_the_display_of_buttons(self.enemy_buttons[0], show=not result)
+
+        self.change_the_display_unchanged_labels(self.labels_second_lvl, show=result)
+        self.change_the_display_unchanged_labels(self.labels_first_lvl, show=not result)
+
+    @staticmethod
+    def change_the_display_unchanged_labels(data: List[QtWidgets.QLabel], show: bool) -> None:
+        for label in data:
+            if show:
+                label.show()
+            else:
+                label.hide()
 
     @staticmethod
     def change_the_display_of_buttons(field: dict, show: bool) -> None:
@@ -181,15 +213,16 @@ class GameWindow(QMainWindow):
             self.display_a_hit(unit, level, point, fluf=False)
 
     def customize_window(self):
-        window_weight, window_height = self.calculate_window_size()
+        window_width, window_height = self.calculate_window_size()
         self.setObjectName('MainWindow')
         self.setWindowTitle('Игра')
-        self.resize(window_weight, window_height)
-        self.setMinimumSize(QtCore.QSize(window_weight, window_height))
-        self.setMaximumSize(QtCore.QSize(window_weight, window_height))
+        self.resize(window_width, window_height)
+        self.setMinimumSize(QtCore.QSize(window_width, window_height))
+        self.setMaximumSize(QtCore.QSize(window_width, window_height))
 
     def calculate_window_size(self) -> (int, int):
-        window_weight = max(520, 40 + 20 * self.one_field_size[0]
-                            + 50 + 20 * self.one_field_size[0] + 40)
+        window_width = max(520, 40 + 20 * self.one_field_size[0]
+                           + 50 + 20 * self.one_field_size[0] + 40)
         window_height = 90 + 10 + 20 * self.one_field_size[1] + 100
-        return window_weight, window_height
+        # return 600, 600
+        return window_width, window_height

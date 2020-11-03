@@ -1,6 +1,6 @@
 from logic.arrange_the_ships_logic import ArrangeTheShipsLogic
 from logic.field import Field
-from logic.game import Game
+from logic.game_logic import Game
 from windows.configuration_window import ConfigurationWindow
 
 

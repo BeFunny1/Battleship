@@ -37,19 +37,21 @@ class Game:
             self.enemy.update_used_cells(output)
 
     def shot_handler(self, unit: str, level: int, point: (int, int)):
-        response_from_ai, ship = self.enemy.process_a_shot(level, point)
-        if response_from_ai == 'wound':
+        if unit == 'enemy':
+            response, ship = self.enemy.process_a_shot(level, point)
+        else:
+            response, ship = self.player.process_a_shot(level, point)
+        if response == 'wound':
             self.game_window.display_a_hit(unit, level, point, fluf=False)
-        elif response_from_ai == 'kill':
+        elif response == 'kill':
             self.game_window.display_the_destruction(unit, level, ship)
-        elif response_from_ai == 'fluffed':
+        elif response == 'fluffed':
             self.game_window.display_a_hit(unit, level, point, fluf=True)
-        self.game_is_over = not self.enemy.live_ships_remained
+        self.game_is_over = not self.enemy.live_ships_remained() or not self.player.live_ships_remained()
         if unit == 'player':
             return ship
 
     def player_shot_handler(self, level: int, point: (int, int)):
-        print(point)
         if not self.game_is_over:
             if self.now_the_player_turn:
                 self.shot_handler('enemy', level, point)
