@@ -1,6 +1,8 @@
+from typing import Dict
+
 from logic.arrange_the_ships_logic import ArrangeTheShipsLogic
 from logic.field import Field
-from logic.game import Game
+from logic.game_logic import Game
 from windows.configuration_window import ConfigurationWindow
 
 
@@ -22,7 +24,7 @@ class Application:
 
     def create_arrange_the_ships_window(self, permission, three_dimensional_map, ai_level):
         self.three_dimensional_map = three_dimensional_map
-        self.ai_level = self.ai_level
+        self.ai_level = ai_level
 
         self.config_window.hide()
         self.field_size = list(map(int, permission.split('x')))
@@ -32,10 +34,10 @@ class Application:
               self.field_size, self.three_dimensional_map, for_test=False)
         self.arrange_the_ships.establish_communication(self.go_to_the_game)
 
-    def go_to_the_game(self, information: list):
+    def go_to_the_game(self, information: list, number_of_ships_per_level: Dict[int, int]):
         self.arrange_the_ships.hide_window()
         field = Field(information)
-        self.game = Game(self.field_size, self.three_dimensional_map, field.ships)
+        self.game = Game(self.field_size, self.three_dimensional_map, field.ships, number_of_ships_per_level)
 
 
 if __name__ == '__main__':

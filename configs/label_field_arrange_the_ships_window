@@ -1,9 +1,15 @@
 {
   "ships": {
-    "battleship": [120, 30, 60, 20],
-    "cruiser": [120, 50, 60, 20],
-    "destroyer": [120, 70, 60, 20],
-    "boat": [120, 90, 60, 20]
+    "battleship": [150, 30, 60, 20],
+    "cruiser": [150, 50, 60, 20],
+    "destroyer": [150, 70, 60, 20],
+    "boat": [150, 90, 60, 20]
+  },
+  "submarine": {
+    "nuclear submarine": [150, 30, 60, 20],
+    "large submarine": [150, 50, 60, 20],
+    "medium submarine": [150, 70, 60, 20],
+    "ultra-small submarine": [150, 90, 60, 20]
   },
   "sub_level_activate": [300, 60, 90, 20]
 }

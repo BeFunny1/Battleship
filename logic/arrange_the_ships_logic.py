@@ -1,5 +1,6 @@
 import collections
 from itertools import repeat
+from typing import Dict, Tuple, List
 
 from windows.arrange_the_ships_window import ArrangeTheShipsWindow
 
@@ -11,21 +12,25 @@ class ArrangeTheShipsLogic:
         self.three_dimensional = three_dimensional
         self.arrange_the_ships_window = None
         self.field_for_related_entity = None
-        self.stack_related_entity = []
+        self.number_of_ships_per_level: Dict[int, int] = {}
+        self.stack_related_entity_first_lvl: List[int] = []
+        self.stack_related_entity_second_lvl: List[int] = []
+
         self.customer = None
         if not for_test:
             self.create_an_environment()
 
     def processing_options_for_the_location_of_the_ship(
-            self, level: int, point: (int, int)):
+            self, level: int, point: Tuple[int, int]) -> None:
         if not self.for_test:
             activate_del = self.arrange_the_ships_window.button_del_activity
         else:
             activate_del = False
 
         if not self.is_a_related_entity(level, point):
-            if len(self.stack_related_entity) > 0:
-                self.related_entity_placement(level, point)
+            if not self.all_ships_arrange():
+                if self.user_can_pick_this_cell(level):
+                    self.related_entity_placement(level, point)
         else:
             if activate_del:
                 self.delete_related_entity(level, point)
@@ -34,8 +39,18 @@ class ArrangeTheShipsLogic:
 
         if not self.for_test:
             self.update_number_of_related_entity()
-            allow = len(self.stack_related_entity) == 0
+            allow = self.all_ships_arrange()
             self.open_possibility_of_start_the_game(allow=allow)
+
+    def user_can_pick_this_cell(self, level: int) -> bool:
+        if level == 0:
+            return len(self.stack_related_entity_first_lvl) > 0
+        else:
+            return len(self.stack_related_entity_second_lvl) > 0
+
+    def all_ships_arrange(self) -> bool:
+        return len(self.stack_related_entity_first_lvl) == 0 \
+               and len(self.stack_related_entity_second_lvl) == 0
 
     def open_possibility_of_start_the_game(self, allow: bool):
         self.arrange_the_ships_window.switch_start_game_button(allow)
@@ -43,7 +58,7 @@ class ArrangeTheShipsLogic:
     def go_to_the_next_stage(self):
         information_about_all_related_entity \
             = self.get_information_about_all_related_entity()
-        self.customer(information_about_all_related_entity)
+        self.customer(information_about_all_related_entity, self.number_of_ships_per_level)
 
     def hide_window(self):
         self.arrange_the_ships_window.hide()
@@ -91,10 +106,13 @@ class ArrangeTheShipsLogic:
         size_current_related_entity = self.field_for_related_entity[level][x][y]
         current_related_entity = self.find_related_entity_on_the_field(level, axis, point, size_current_related_entity)
         self.erase_the_related_entity_from_the_field(level, current_related_entity)
-        self.stack_related_entity.append(size_current_related_entity)
+        self.stack_related_entity_first_lvl.append(size_current_related_entity)
 
     def related_entity_placement(self, level: int, point: (int, int)):
-        size_necessary_related_entity = self.stack_related_entity.pop()
+        if level == 0:
+            size_necessary_related_entity = self.stack_related_entity_first_lvl.pop()
+        else:
+            size_necessary_related_entity = self.stack_related_entity_second_lvl.pop()
         possible_related_entity = self.get_possible_related_entity_subject_to_axis(
             size_necessary_related_entity, point, 'x')
         possible = self.check_possibility_of_placing_the_related_entity(
@@ -109,7 +127,10 @@ class ArrangeTheShipsLogic:
         if possible:
             self.add_related_entity_on_field(level, possible_related_entity)
         else:
-            self.stack_related_entity.append(size_necessary_related_entity)
+            if level == 0:
+                self.stack_related_entity_first_lvl.append(size_necessary_related_entity)
+            else:
+                self.stack_related_entity_second_lvl.append(size_necessary_related_entity)
 
     def erase_the_related_entity_from_the_field(self, level: int, related_entity: []) -> None:
         for point in related_entity:
@@ -197,18 +218,14 @@ class ArrangeTheShipsLogic:
         return result
 
     def checking_the_placement_area(self, level: int, start_x: int, start_y: int, end_x: int, end_y: int) -> bool:
-        result = False
+        results = []
         for x in range(start_x, end_x + 1):
             for y in range(start_y, end_y + 1):
-                if x in self.field_for_related_entity[level].keys() and \
-                        y in self.field_for_related_entity[level][x].keys() and \
-                        self.field_for_related_entity[level][x][y] == 0:
-                    result = True
-                else:
-                    return False
-        return result
+                cell_available = self.field_for_related_entity[level][x][y] == 0
+                results.append(cell_available)
+        return all(results)
 
-    def create_start_field_for_related_entity(self) -> dict:
+    def create_start_field_for_related_entity(self) -> Dict:
         start_field = {0: {}, 1: {}}
         for x in range(self.field_size[0]):
             start_field[0][x] = {}
@@ -225,10 +242,8 @@ class ArrangeTheShipsLogic:
         self.create_window()
 
         number_of_cells = self.field_size[0] * self.field_size[1]
-        if self.three_dimensional:
-            number_of_cells = number_of_cells * 2
-        data = self.calculate_the_number_of_related_entity_on_the_field(number_of_cells)
-        self.fill_stack_related_entity(data)
+        self.number_of_ships_per_level = self.calculate_the_number_of_related_entity_on_the_field(number_of_cells)
+        self.fill_stack_related_entity(self.number_of_ships_per_level)
         self.update_number_of_related_entity()
 
     def create_window(self):
@@ -240,14 +255,22 @@ class ArrangeTheShipsLogic:
         self.arrange_the_ships_window.show()
 
     def fill_stack_related_entity(self, data_about_number_of_related_entity: dict):
-        for related_entity in reversed(data_about_number_of_related_entity.keys()):
-            self.stack_related_entity.extend(repeat(related_entity, data_about_number_of_related_entity[related_entity]))
+        for related_entity in reversed(list(data_about_number_of_related_entity.keys())):
+            self.stack_related_entity_first_lvl.extend(
+                repeat(related_entity, data_about_number_of_related_entity[related_entity]))
+            if self.three_dimensional:
+                self.stack_related_entity_second_lvl.extend(
+                    repeat(related_entity, data_about_number_of_related_entity[related_entity]))
 
     def update_number_of_related_entity(self):
         template_data = collections.Counter({4: 0, 3: 0, 2: 0, 1: 0})
-        new_data_about_related_entity_number = collections.Counter(self.stack_related_entity)
-        new_data_about_related_entity_number.update(template_data)
-        self.arrange_the_ships_window.update_info_on_label(new_data_about_related_entity_number)
+        new_data_about_related_entity_number_first_lvl = collections.Counter(self.stack_related_entity_first_lvl)
+        new_data_about_related_entity_number_first_lvl.update(template_data)
+
+        new_data_about_related_entity_number_second_lvl = collections.Counter(self.stack_related_entity_second_lvl)
+        new_data_about_related_entity_number_second_lvl.update(template_data)
+        self.arrange_the_ships_window.update_info_on_label(new_data_about_related_entity_number_first_lvl,
+                                                           new_data_about_related_entity_number_second_lvl)
 
     @staticmethod
     def calculate_the_number_of_related_entity_on_the_field(number_of_cells: int) -> dict:

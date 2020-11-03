@@ -15,12 +15,10 @@ class AI:
         handler = ArrangeTheShipsLogic(
             self.field_size, self.three_dimensional, for_test=True)
         number_of_cells = self.field_size[0] * self.field_size[1]
-        if self.three_dimensional:
-            number_of_cells = number_of_cells * 2
         number_of_ships = handler.calculate_the_number_of_related_entity_on_the_field(number_of_cells)
         handler.field_for_related_entity = handler.create_start_field_for_related_entity()
         handler.fill_stack_related_entity(number_of_ships)
-        while len(handler.stack_related_entity) > 0:
+        while len(handler.stack_related_entity_first_lvl) > 0:
             level = 0
             if self.three_dimensional:
                 level = randint(0, 1)
