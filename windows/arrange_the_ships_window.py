@@ -19,6 +19,9 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
+        self.interval_x: Tuple[int, int] = ()
+        self.interval_y: Tuple[int, int] = ()
+
         self.labels_first_lvl = None
         self.labels_second_lvl = None
 
@@ -47,7 +50,24 @@ class ArrangeTheShipsWindow(QMainWindow):
             = self.create_start_game_button()
         if self.three_dimensional:
             self.create_button_to_change_levels()
+        if self.field_size[0] > 15:
+            self.create_direction_arrows_button()
         self.field_button = self.create_field_buttons()
+
+    def create_direction_arrows_button(self) -> Dict[str, QtWidgets.QPushButton]:
+        data_for_buttons = self.config_reader.read_config_file(
+            'direction_arrows_button')
+        arrows_button: Dict[str, QtWidgets.QPushButton] = {}
+        for direction in data_for_buttons.keys():
+            text, geometric_data = list(data_for_buttons[direction].items())[0]
+            x, y, width, height = geometric_data['arrange']
+            button = QtWidgets.QPushButton(self.central_widget)
+            button.setGeometry(QtCore.QRect(x, y, width, height))
+            button.setObjectName(f'arrows_button_{direction}')
+            button.setText(text)
+            # button.clicked.connect(partial(self.customer, 0, (x, y)))
+            arrows_button[direction] = button
+        return arrows_button
 
     def update_info_on_label(self, data_first_lvl: dict, data_second_lvl: dict) -> None:
         translator_first_lvl = {
@@ -119,7 +139,7 @@ class ArrangeTheShipsWindow(QMainWindow):
                 else:
                     field[x][y].hide()
 
-    def create_field_buttons(self) -> dict:
+    def n_create_field_buttons(self) -> dict:
         field = {0: {}, 1: {}}
         start_x = self.width() // 2 - (self.field_size[0] // 2 * 20)
         start_y = 130
@@ -146,7 +166,47 @@ class ArrangeTheShipsWindow(QMainWindow):
                         partial(self.customer, 1, (x, y)))
                     sublevel_button.hide()
                     field[1][x][y] = sublevel_button
+        self.interval_x = (0, 15)
+        self.interval_y = (0, 15)
         return field
+
+    def create_field_buttons(self) -> None:
+        field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = {0: {}, 1: {}}
+        x_coordinate_grid, y_coordinate_grid = self.get_coordinate_grid()
+        for x in range(self.field_size[0]):
+            field[0][x] = {}
+            if self.three_dimensional:
+                field[1][x] = {}
+            for y in range(self.field_size[1]):
+                button = QtWidgets.QPushButton(self.central_widget)
+                x_coordinate, y_coordinate = x_coordinate_grid[x % 16], y_coordinate_grid[y % 16]
+                button.setGeometry(x_coordinate, y_coordinate, 20, 20)
+                button.setObjectName(f'button_field_{x}_{y}')
+                button.clicked.connect(
+                    partial(self.customer, 0, (x, y)))
+                field[0][x][y] = button
+                if x > 15 or y > 15:
+                    button.hide()
+                if self.three_dimensional:
+                    sublevel_button = QtWidgets.QPushButton(self.central_widget)
+                    sublevel_button.setGeometry(x_coordinate, y_coordinate, 20, 20)
+                    sublevel_button.setObjectName(f'sublevel_button_field_{x}_{y}')
+                    sublevel_button.hide()
+                    sublevel_button.clicked.connect(
+                        partial(self.customer, 1, (x, y)))
+                    field[1][x][y] = sublevel_button
+        self.interval_x = (0, 15)
+        self.interval_y = (0, 15)
+        return field
+
+    @staticmethod
+    def get_coordinate_grid() -> Tuple[List[int], List[int]]:
+        x_coordinates = []
+        y_coordinates = []
+        for i in range(16):
+            x_coordinates.append(100 + i * 20)
+            y_coordinates.append(130 + i * 20)
+        return x_coordinates, y_coordinates
 
     def switch_start_game_button(self, toggle: bool):
         self.start_game_button.setEnabled(toggle)
@@ -255,9 +315,15 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.setMaximumSize(QtCore.QSize(window_weight, window_height))
 
     def calculate_window_size(self) -> (int, int):
-        window_weight = max(520, 40 + 20 * self.field_size[0] + 40)
-        window_height = 90 + 10 + 20 * self.field_size[1] + 100
-        return window_weight, window_height
+        if self.field_size[0] >= 16:
+            return 520, 770
+        elif self.field_size[0] == 16:
+            return 520, 520
+        else:
+            return 520, 400
+        # window_weight = max(520, 40 + 20 * self.field_size[0] + 40)
+        # window_height = 90 + 10 + 20 * self.field_size[1] + 100
+        # return window_weight, window_height
 
 
 if __name__ == '__main__':

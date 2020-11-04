@@ -310,7 +310,9 @@ class GameWindow(QMainWindow):
         self.setMaximumSize(QtCore.QSize(window_width, window_height))
 
     def calculate_window_size(self) -> (int, int):
-        if self.one_field_size[0] > 10:
+        if self.one_field_size[0] > 16:
+            return 770, 770
+        elif self.one_field_size[0] == 16:
             return 770, 520
         else:
             return 520, 400
