@@ -18,7 +18,7 @@ class AI:
         number_of_ships = handler.calculate_the_number_of_related_entity_on_the_field(number_of_cells)
         handler.field_for_related_entity = handler.create_start_field_for_related_entity()
         handler.fill_stack_related_entity(number_of_ships)
-        while len(handler.stack_related_entity_first_lvl) > 0:
+        while len(handler.stack_related_entity_first_lvl) > 0 or len(handler.stack_related_entity_second_lvl) > 0:
             level = 0
             if self.three_dimensional:
                 level = randint(0, 1)
