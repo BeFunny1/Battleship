@@ -19,13 +19,15 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
-        self.interval_x: Tuple[int, int] = ()
-        self.interval_y: Tuple[int, int] = ()
+        self.current_level: int = 0
+        self.interval_x: Tuple[int, int] = (0, 15)
+        self.interval_y: Tuple[int, int] = (0, 15)
 
         self.labels_first_lvl = None
         self.labels_second_lvl = None
 
         self.button_del_activity = False
+        self.labels_for_display_interval = None
         self.field_button = None
         self.label_fields_first_level = None
         self.label_fields_second_level = None
@@ -48,10 +50,14 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.create_del_button()
         self.start_game_button \
             = self.create_start_game_button()
+
         if self.three_dimensional:
             self.create_button_to_change_levels()
-        if self.field_size[0] > 15:
+        if self.field_size[0] > 16:
             self.create_direction_arrows_button()
+            self.labels_for_display_interval \
+                = self.create_labels_with_intervals()
+            self.update_labels_with_intervals()
         self.field_button = self.create_field_buttons()
 
     def create_direction_arrows_button(self) -> Dict[str, QtWidgets.QPushButton]:
@@ -65,9 +71,67 @@ class ArrangeTheShipsWindow(QMainWindow):
             button.setGeometry(QtCore.QRect(x, y, width, height))
             button.setObjectName(f'arrows_button_{direction}')
             button.setText(text)
-            # button.clicked.connect(partial(self.customer, 0, (x, y)))
+            button.clicked.connect(partial(self.make_a_shift_in_the_field, direction))
             arrows_button[direction] = button
         return arrows_button
+
+    def make_a_shift_in_the_field(self, direction: str) -> None:
+        if direction == 'right' and self.interval_x[1] < self.field_size[0] - 1:
+            self.hide_all_field_button()
+            self.interval_x = self.interval_x[0] + 16, self.interval_x[1] + 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+        elif direction == 'left' and self.interval_x[0] > 0:
+            self.hide_all_field_button()
+            self.interval_x = self.interval_x[0] - 16, self.interval_x[1] - 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+        elif direction == 'up' and self.interval_y[0] > 0:
+            self.hide_all_field_button()
+            self.interval_y = self.interval_y[0] - 16, self.interval_y[1] - 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+        elif direction == 'down' and self.interval_y[1] < self.field_size[1] - 1:
+            self.hide_all_field_button()
+            self.interval_y = self.interval_y[0] + 16, self.interval_y[1] + 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+
+    def create_labels_with_intervals(self):
+        data = self.config_reader.read_config_file(
+            'label_field_arrange_the_ships_window')
+        data_for_labels = data['interval']
+        labels: Dict[str, QtWidgets.QLabel] = {}
+        for key in data_for_labels.keys():
+            x, y, width, height = data_for_labels[key]
+            label = QtWidgets.QLabel(self.central_widget)
+            label.setText(key)
+            label.setGeometry(QtCore.QRect(x, y, width, height))
+            label.setObjectName("label")
+            label.setAlignment(QtCore.Qt.AlignRight)
+            if key == 'x_start':
+                label.setAlignment(QtCore.Qt.AlignLeft)
+            labels[key] = label
+        return labels
+
+    def update_labels_with_intervals(self):
+        self.labels_for_display_interval['x_start'].setText(str(self.interval_x[0]))
+        self.labels_for_display_interval['x_end'].setText(str(self.interval_x[1]))
+        self.labels_for_display_interval['y_start'].setText(str(self.interval_y[0]))
+        self.labels_for_display_interval['y_end'].setText(str(self.interval_y[1]))
+
+    def hide_all_field_button(self) -> None:
+        for level in self.field_button.keys():
+            for x in self.field_button[level]:
+                for y in self.field_button[level][x]:
+                    self.field_button[level][x][y].hide()
+
+    def show_area_field_button(self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
+        x_start, x_end = area[0]
+        y_start, y_end = area[1]
+        for x in range(x_start, x_end + 1):
+            for y in range(y_start, y_end + 1):
+                self.field_button[level][x][y].show()
 
     def update_info_on_label(self, data_first_lvl: dict, data_second_lvl: dict) -> None:
         translator_first_lvl = {
@@ -103,16 +167,24 @@ class ArrangeTheShipsWindow(QMainWindow):
         current_text = button_to_change_levels.text()
         new_text = reverse_phrases[current_text]
         button_to_change_levels.setText(new_text)
-        result = self.field_button[1][0][0].isHidden()
+        result = self.current_level == 0
+        if result:
+            self.current_level = 1
+        else:
+            self.current_level = 0
 
-        self.change_the_display_of_buttons(self.field_button[1], show=result)
-        self.change_the_display_of_buttons(self.field_button[0], show=not result)
+        self.change_the_display_of_buttons()
 
         self.change_the_display_changed_labels(self.label_fields_second_level, show=result)
         self.change_the_display_changed_labels(self.label_fields_first_level, show=not result)
 
         self.change_the_display_unchanged_labels(self.labels_second_lvl, show=result)
         self.change_the_display_unchanged_labels(self.labels_first_lvl, show=not result)
+
+    def change_the_display_of_buttons(self) -> None:
+        self.hide_all_field_button()
+        self.show_area_field_button(self.current_level,
+                                    (self.interval_x, self.interval_y))
 
     @staticmethod
     def change_the_display_unchanged_labels(data: List[QtWidgets.QLabel], show: bool) -> None:
@@ -130,47 +202,7 @@ class ArrangeTheShipsWindow(QMainWindow):
             else:
                 data[label].hide()
 
-    @staticmethod
-    def change_the_display_of_buttons(field: dict, show: bool) -> None:
-        for x in field.keys():
-            for y in field[x].keys():
-                if show:
-                    field[x][y].show()
-                else:
-                    field[x][y].hide()
-
-    def n_create_field_buttons(self) -> dict:
-        field = {0: {}, 1: {}}
-        start_x = self.width() // 2 - (self.field_size[0] // 2 * 20)
-        start_y = 130
-        for x in range(self.field_size[0]):
-            field[0][x] = {}
-            if self.three_dimensional:
-                field[1][x] = {}
-            for y in range(self.field_size[1]):
-                button = QtWidgets.QPushButton(self.central_widget)
-                button.setGeometry(QtCore.QRect(
-                    start_x + 20 * x, start_y + 20 * y, 20, 20))
-                button.setObjectName(
-                    f'button_main_field_{str(x)}_{str(y)}')
-                button.clicked.connect(
-                    partial(self.customer, 0, (x, y)))
-                field[0][x][y] = button
-                if self.three_dimensional:
-                    sublevel_button = QtWidgets.QPushButton(self.central_widget)
-                    sublevel_button.setGeometry(QtCore.QRect(
-                        start_x + 20 * x, start_y + 20 * y, 20, 20))
-                    sublevel_button.setObjectName(
-                        f'button_sublevel_field_{str(x)}_{str(y)}')
-                    sublevel_button.clicked.connect(
-                        partial(self.customer, 1, (x, y)))
-                    sublevel_button.hide()
-                    field[1][x][y] = sublevel_button
-        self.interval_x = (0, 15)
-        self.interval_y = (0, 15)
-        return field
-
-    def create_field_buttons(self) -> None:
+    def create_field_buttons(self) -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = {0: {}, 1: {}}
         x_coordinate_grid, y_coordinate_grid = self.get_coordinate_grid()
         for x in range(self.field_size[0]):
@@ -195,8 +227,6 @@ class ArrangeTheShipsWindow(QMainWindow):
                     sublevel_button.clicked.connect(
                         partial(self.customer, 1, (x, y)))
                     field[1][x][y] = sublevel_button
-        self.interval_x = (0, 15)
-        self.interval_y = (0, 15)
         return field
 
     @staticmethod
@@ -205,7 +235,7 @@ class ArrangeTheShipsWindow(QMainWindow):
         y_coordinates = []
         for i in range(16):
             x_coordinates.append(100 + i * 20)
-            y_coordinates.append(130 + i * 20)
+            y_coordinates.append(150 + i * 20)
         return x_coordinates, y_coordinates
 
     def switch_start_game_button(self, toggle: bool):
@@ -315,10 +345,10 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.setMaximumSize(QtCore.QSize(window_weight, window_height))
 
     def calculate_window_size(self) -> (int, int):
-        if self.field_size[0] >= 16:
+        if self.field_size[0] > 16:
             return 520, 770
         elif self.field_size[0] == 16:
-            return 520, 520
+            return 520, 560
         else:
             return 520, 400
         # window_weight = max(520, 40 + 20 * self.field_size[0] + 40)

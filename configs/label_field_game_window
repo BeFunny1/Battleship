@@ -10,5 +10,15 @@
     "large submarine": [150, 50, 60, 20],
     "medium submarine": [150, 70, 60, 20],
     "ultra-small submarine": [150, 90, 60, 20]
+  },
+  "interval": {
+    "x_start_player": [40, 160, 55, 16],
+    "x_end_player": [302, 160, 55, 16],
+    "y_start_player": [-19, 180, 55, 16],
+    "y_end_player": [-19, 480, 55, 16],
+    "x_start_enemy": [410, 160, 55, 16],
+    "x_end_enemy": [672, 160, 55, 16],
+    "y_start_enemy": [351, 180, 55, 16],
+    "y_end_enemy": [351, 480, 55, 16]
   }
 }

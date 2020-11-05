@@ -21,6 +21,11 @@ class GameWindow(QMainWindow):
         self.labels_first_lvl = None
         self.labels_second_lvl = None
 
+        self.current_level: int = 0
+        self.interval_x: Tuple[int, int] = (0, 15)
+        self.interval_y: Tuple[int, int] = (0, 15)
+
+        self.labels_for_display_interval = None
         self.label_with_info_about_the_course_of_the_game: QtWidgets.QLabel = None
         self.final_caption_labels: Dict[str, QtWidgets.QLabel] = {}
         self.label_fields_first_level: Dict[str, QtWidgets.QLabel] = {}
@@ -38,14 +43,91 @@ class GameWindow(QMainWindow):
         self.label_with_info_about_the_course_of_the_game = self.create_label_with_info_about_the_course_of_the_game()
         self.final_caption_labels = self.game_is_over_label_create()
         self.labels_first_lvl, self.labels_second_lvl = self.create_inscriptions()
+        if self.one_field_size[0] > 16:
+            self.create_direction_arrows_button()
+            self.labels_for_display_interval \
+                = self.create_labels_with_intervals()
+            self.update_labels_with_intervals()
         self.label_fields_first_level, self.label_fields_second_level = self.create_label_fields()
 
         if self.three_dimensional:
             self.button_to_change_level = self.create_button_to_change_levels()
 
+    def create_labels_with_intervals(self):
+        data = self.config_reader.read_config_file(
+            'label_field_game_window')
+        data_for_labels = data['interval']
+        labels: Dict[str, QtWidgets.QLabel] = {}
+        for key in data_for_labels.keys():
+            x, y, width, height = data_for_labels[key]
+            label = QtWidgets.QLabel(self.central_widget)
+            label.setText(key)
+            label.setGeometry(QtCore.QRect(x, y, width, height))
+            label.setObjectName("label")
+            label.setAlignment(QtCore.Qt.AlignRight)
+            if key == 'x_start_player' or key == 'x_start_enemy':
+                label.setAlignment(QtCore.Qt.AlignLeft)
+            labels[key] = label
+        return labels
+
+    def create_direction_arrows_button(self) -> Dict[str, QtWidgets.QPushButton]:
+        data_for_buttons = self.config_reader.read_config_file(
+            'direction_arrows_button')
+        arrows_button: Dict[str, QtWidgets.QPushButton] = {}
+        for direction in data_for_buttons.keys():
+            text, geometric_data = list(data_for_buttons[direction].items())[0]
+            x, y, width, height = geometric_data['game']
+            button = QtWidgets.QPushButton(self.central_widget)
+            button.setGeometry(QtCore.QRect(x, y, width, height))
+            button.setObjectName(f'arrows_button_{direction}')
+            button.setText(text)
+            button.clicked.connect(partial(self.make_a_shift_in_the_field, direction))
+            arrows_button[direction] = button
+        return arrows_button
+
+    def make_a_shift_in_the_field(self, direction: str) -> None:
+        if direction == 'right' and self.interval_x[1] < self.one_field_size[0] - 1:
+            self.hide_all_field_button()
+            self.interval_x = self.interval_x[0] + 16, self.interval_x[1] + 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+
+        elif direction == 'left' and self.interval_x[0] > 0:
+            self.hide_all_field_button()
+            self.interval_x = self.interval_x[0] - 16, self.interval_x[1] - 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+
+        elif direction == 'up' and self.interval_y[0] > 0:
+            self.hide_all_field_button()
+            self.interval_y = self.interval_y[0] - 16, self.interval_y[1] - 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+
+        elif direction == 'down' and self.interval_y[1] < self.one_field_size[1] - 1:
+            self.hide_all_field_button()
+            self.interval_y = self.interval_y[0] + 16, self.interval_y[1] + 16
+            self.show_area_field_button(self.current_level, area=(self.interval_x, self.interval_y))
+            self.update_labels_with_intervals()
+
+    def hide_all_field_button(self) -> None:
+        for level in self.player_buttons.keys():
+            for x in self.player_buttons[level]:
+                for y in self.player_buttons[level][x]:
+                    self.player_buttons[level][x][y].hide()
+                    self.enemy_buttons[level][x][y].hide()
+
+    def show_area_field_button(self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
+        x_start, x_end = area[0]
+        y_start, y_end = area[1]
+        for x in range(x_start, x_end + 1):
+            for y in range(y_start, y_end + 1):
+                self.player_buttons[level][x][y].show()
+                self.enemy_buttons[level][x][y].show()
+
     def create_label_with_info_about_the_course_of_the_game(self) -> QtWidgets.QLabel:
         text = 'Текущий ход: player. Последний выстрел: , уровень: , точка: '
-        x, y, width, height = [0, 120, 510, 20]
+        x, y, width, height = [0, 120, self.width(), 20]
         label = QtWidgets.QLabel(self.central_widget)
         label.setText(text)
         label.setGeometry(QtCore.QRect(x, y, width, height))
@@ -70,7 +152,7 @@ class GameWindow(QMainWindow):
         for option_winner in inscriptions_and_geometric_data['end_game'].keys():
             text, geometric_data = list(inscriptions_and_geometric_data['end_game'][option_winner].items())[0]
             x, y, width, height = geometric_data
-            # y = self.height() - 40
+            width = self.width()
             label = QtWidgets.QLabel(self.central_widget)
             label.setText(text)
             label.setGeometry(QtCore.QRect(x, y, width, height))
@@ -185,19 +267,25 @@ class GameWindow(QMainWindow):
         current_text = button_to_change_levels.text()
         new_text = reverse_phrases[current_text]
         button_to_change_levels.setText(new_text)
-        result = self.player_buttons[1][0][0].isHidden()
+        # result = self.player_buttons[1][0][0].isHidden()
+        result = self.current_level == 0
+        if result:
+            self.current_level = 1
+        else:
+            self.current_level = 0
 
-        self.change_the_display_of_buttons(self.player_buttons[1], show=result)
-        self.change_the_display_of_buttons(self.player_buttons[0], show=not result)
-
-        self.change_the_display_of_buttons(self.enemy_buttons[1], show=result)
-        self.change_the_display_of_buttons(self.enemy_buttons[0], show=not result)
+        self.change_the_display_of_buttons()
 
         self.change_the_display_unchanged_labels(self.labels_second_lvl, show=result)
         self.change_the_display_unchanged_labels(self.labels_first_lvl, show=not result)
 
         self.change_the_display_changed_labels(self.label_fields_second_level, show=result)
         self.change_the_display_changed_labels(self.label_fields_first_level, show=not result)
+
+    def change_the_display_of_buttons(self) -> None:
+        self.hide_all_field_button()
+        self.show_area_field_button(self.current_level,
+                                    (self.interval_x, self.interval_y))
 
     @staticmethod
     def change_the_display_changed_labels(data: Dict[str, QtWidgets.QLabel], show: bool) -> None:
@@ -215,31 +303,42 @@ class GameWindow(QMainWindow):
             else:
                 label.hide()
 
-    @staticmethod
-    def change_the_display_of_buttons(field: dict, show: bool) -> None:
-        for x in field.keys():
-            for y in field[x].keys():
-                if show:
-                    field[x][y].show()
-                else:
-                    field[x][y].hide()
-
     def create_field_buttons_player(self) -> {}:
         start_x_player = 40
         buttons = self.create_field_buttons(start_x_player, is_a_player=True)
         return buttons
 
     def create_field_buttons_enemy(self) -> {}:
-        start_x_enemy = 40 + 20 * self.one_field_size[0] + 50
+        start_x_enemy = 40 + 20 * 16 + 50
         buttons = self.create_field_buttons(start_x_enemy, is_a_player=False)
         return buttons
 
     def establish_connection(self, player_shot_handler):
         self.player_shot_handler = player_shot_handler
 
+    def update_labels_with_intervals(self):
+        self.labels_for_display_interval['x_start_player'].setText(str(self.interval_x[0]))
+        self.labels_for_display_interval['x_end_player'].setText(str(self.interval_x[1]))
+        self.labels_for_display_interval['y_start_player'].setText(str(self.interval_y[0]))
+        self.labels_for_display_interval['y_end_player'].setText(str(self.interval_y[1]))
+
+        self.labels_for_display_interval['x_start_enemy'].setText(str(self.interval_x[0]))
+        self.labels_for_display_interval['x_end_enemy'].setText(str(self.interval_x[1]))
+        self.labels_for_display_interval['y_start_enemy'].setText(str(self.interval_y[0]))
+        self.labels_for_display_interval['y_end_enemy'].setText(str(self.interval_y[1]))
+
+    @staticmethod
+    def get_coordinate_grid(start_x: int) -> Tuple[List[int], List[int]]:
+        x_coordinates = []
+        y_coordinates = []
+        for i in range(16):
+            x_coordinates.append(start_x + i * 20)
+            y_coordinates.append(178 + i * 20)
+        return x_coordinates, y_coordinates
+
     def create_field_buttons(self, start_x: int, is_a_player: bool) -> {}:
-        field = {0: {}, 1: {}}
-        start_y = 160
+        field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = {0: {}, 1: {}}
+        x_coordinate_grid, y_coordinate_grid = self.get_coordinate_grid(start_x)
         for x in range(self.one_field_size[0]):
             field[0][x] = {}
             if self.three_dimensional:
@@ -247,25 +346,24 @@ class GameWindow(QMainWindow):
             for y in range(self.one_field_size[1]):
                 button = QtWidgets.QPushButton(self.central_widget)
                 button.setEnabled(not is_a_player)
-                button.setGeometry(QtCore.QRect(
-                    start_x + 20 * x, start_y + 20 * y, 20, 20))
-                button.setObjectName(
-                    f'button_main_field_{str(x)}_{str(y)}')
+                x_coordinate, y_coordinate = x_coordinate_grid[x % 16], y_coordinate_grid[y % 16]
+                button.setGeometry(x_coordinate, y_coordinate, 20, 20)
+                button.setObjectName(f'button_field_{x}_{y}')
                 if not is_a_player:
                     button.clicked.connect(
                         partial(self.player_shot_handler, 0, (x, y)))
                 field[0][x][y] = button
+                if x > 15 or y > 15:
+                    button.hide()
                 if self.three_dimensional:
                     sublevel_button = QtWidgets.QPushButton(self.central_widget)
+                    sublevel_button.setGeometry(x_coordinate, y_coordinate, 20, 20)
+                    sublevel_button.setObjectName(f'sublevel_button_field_{x}_{y}')
                     sublevel_button.setEnabled(not is_a_player)
-                    sublevel_button.setGeometry(QtCore.QRect(
-                        start_x + 20 * x, start_y + 20 * y, 20, 20))
-                    sublevel_button.setObjectName(
-                        f'button_sublevel_field_{str(x)}_{str(y)}')
+                    sublevel_button.hide()
                     if not is_a_player:
                         sublevel_button.clicked.connect(
                             partial(self.player_shot_handler, 1, (x, y)))
-                    sublevel_button.hide()
                     field[1][x][y] = sublevel_button
         return field
 

@@ -11,5 +11,11 @@
     "medium submarine": [150, 70, 60, 20],
     "ultra-small submarine": [150, 90, 60, 20]
   },
+  "interval": {
+    "x_start": [100, 134, 55, 16],
+    "x_end": [364, 134, 55, 16],
+    "y_start": [45, 152, 55, 16],
+    "y_end": [45, 452, 55, 16]
+  },
   "sub_level_activate": [300, 60, 90, 20]
 }
