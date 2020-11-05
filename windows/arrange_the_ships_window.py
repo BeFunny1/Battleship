@@ -203,6 +203,7 @@ class ArrangeTheShipsWindow(QMainWindow):
                 data[label].hide()
 
     def create_field_buttons(self) -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
+        style = self.config_reader.read_config_file('styles_for_element')
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = {0: {}, 1: {}}
         x_coordinate_grid, y_coordinate_grid = self.get_coordinate_grid()
         for x in range(self.field_size[0]):
@@ -216,6 +217,7 @@ class ArrangeTheShipsWindow(QMainWindow):
                 button.setObjectName(f'button_field_{x}_{y}')
                 button.clicked.connect(
                     partial(self.customer, 0, (x, y)))
+                button.setStyleSheet(style['button'])
                 field[0][x][y] = button
                 if x > 15 or y > 15:
                     button.hide()
@@ -223,19 +225,25 @@ class ArrangeTheShipsWindow(QMainWindow):
                     sublevel_button = QtWidgets.QPushButton(self.central_widget)
                     sublevel_button.setGeometry(x_coordinate, y_coordinate, 20, 20)
                     sublevel_button.setObjectName(f'sublevel_button_field_{x}_{y}')
+                    sublevel_button.setStyleSheet(style['button'])
                     sublevel_button.hide()
                     sublevel_button.clicked.connect(
                         partial(self.customer, 1, (x, y)))
                     field[1][x][y] = sublevel_button
         return field
 
-    @staticmethod
-    def get_coordinate_grid() -> Tuple[List[int], List[int]]:
+    def get_coordinate_grid(self) -> Tuple[List[int], List[int]]:
         x_coordinates = []
         y_coordinates = []
+        if self.field_size[0] > 15:
+            x_start = 100
+            y_start = 150
+        else:
+            x_start = self.width() // 2 - (self.field_size[0] // 2 * 20)
+            y_start = 120
         for i in range(16):
-            x_coordinates.append(100 + i * 20)
-            y_coordinates.append(150 + i * 20)
+            x_coordinates.append(x_start + i * 20)
+            y_coordinates.append(y_start + i * 20)
         return x_coordinates, y_coordinates
 
     def switch_start_game_button(self, toggle: bool):

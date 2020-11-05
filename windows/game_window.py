@@ -309,7 +309,10 @@ class GameWindow(QMainWindow):
         return buttons
 
     def create_field_buttons_enemy(self) -> {}:
-        start_x_enemy = 40 + 20 * 16 + 50
+        if self.one_field_size[0] > 15:
+            start_x_enemy = 40 + 20 * 16 + 50
+        else:
+            start_x_enemy = 40 + 20 * 10 + 50
         buttons = self.create_field_buttons(start_x_enemy, is_a_player=False)
         return buttons
 
@@ -337,6 +340,7 @@ class GameWindow(QMainWindow):
         return x_coordinates, y_coordinates
 
     def create_field_buttons(self, start_x: int, is_a_player: bool) -> {}:
+        style = self.config_reader.read_config_file('styles_for_element')
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = {0: {}, 1: {}}
         x_coordinate_grid, y_coordinate_grid = self.get_coordinate_grid(start_x)
         for x in range(self.one_field_size[0]):
@@ -349,6 +353,7 @@ class GameWindow(QMainWindow):
                 x_coordinate, y_coordinate = x_coordinate_grid[x % 16], y_coordinate_grid[y % 16]
                 button.setGeometry(x_coordinate, y_coordinate, 20, 20)
                 button.setObjectName(f'button_field_{x}_{y}')
+                button.setStyleSheet(style['button'])
                 if not is_a_player:
                     button.clicked.connect(
                         partial(self.player_shot_handler, 0, (x, y)))
@@ -360,6 +365,7 @@ class GameWindow(QMainWindow):
                     sublevel_button.setGeometry(x_coordinate, y_coordinate, 20, 20)
                     sublevel_button.setObjectName(f'sublevel_button_field_{x}_{y}')
                     sublevel_button.setEnabled(not is_a_player)
+                    sublevel_button.setStyleSheet(style['button'])
                     sublevel_button.hide()
                     if not is_a_player:
                         sublevel_button.clicked.connect(
