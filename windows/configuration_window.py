@@ -28,8 +28,10 @@ class ConfigurationWindow(QMainWindow):
         self.inscriptions = self.create_inscriptions()
         self.continuation_button = self.create_continuation_button()
         self.check_box_for_3D_field = self.create_check_box_for_3D_field()
-        self.radio_button_for_AI_difficult_level = self.create_radio_button_for_AI_difficult_level()
-        self.combo_box_for_choice_permission = self.create_combo_box_for_choice_permission()
+        self.radio_button_for_AI_difficult_level \
+            = self.create_radio_button_for_AI_difficult_level()
+        self.combo_box_for_choice_permission \
+            = self.create_combo_box_for_choice_permission()
 
     def create_continuation_button(self) -> QtWidgets.QPushButton:
         push_button = QtWidgets.QPushButton(self.central_widget)
@@ -69,7 +71,8 @@ class ConfigurationWindow(QMainWindow):
         check_box.setText('3D поле')
         return check_box
 
-    def create_radio_button_for_AI_difficult_level(self) -> [QtWidgets.QRadioButton]:
+    def create_radio_button_for_AI_difficult_level(self) ->\
+            [QtWidgets.QRadioButton]:
         radio_buttons = []
         options = ['Easy', 'Normal', 'Hard']
         for x in range(3):

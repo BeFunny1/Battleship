@@ -15,16 +15,21 @@ class AI:
         handler = ArrangeTheShipsLogic(
             self.field_size, self.three_dimensional, for_test=True)
         number_of_cells = self.field_size[0] * self.field_size[1]
-        number_of_ships = handler.calculate_the_number_of_related_entity_on_the_field(number_of_cells)
-        handler.field_for_related_entity = handler.create_start_field_for_related_entity()
+        number_of_ships \
+            = handler.calculate_the_number_of_related_entity_on_the_field(
+              number_of_cells)
+        handler.field_for_related_entity \
+            = handler.create_start_field_for_related_entity()
         handler.fill_stack_related_entity(number_of_ships)
-        while len(handler.stack_related_entity_first_lvl) > 0 or len(handler.stack_related_entity_second_lvl) > 0:
+        while len(handler.stack_related_entity_first_lvl) > 0 \
+                or len(handler.stack_related_entity_second_lvl) > 0:
             level = 0
             if self.three_dimensional:
                 level = randint(0, 1)
             x = randint(0, self.field_size[0] - 1)
             y = randint(0, self.field_size[1] - 1)
-            handler.processing_options_for_the_location_of_the_ship(level, (x, y))
+            handler.processing_options_for_the_location_of_the_ship(
+                level, (x, y))
         information_about_all_related_entity \
             = handler.get_information_about_all_related_entity()
         field = Field(information_about_all_related_entity)

@@ -20,9 +20,11 @@ class Application:
         self.config_window = ConfigurationWindow()
         self.config_window.setupUi()
         self.config_window.show()
-        self.config_window.establish_communication(self.create_arrange_the_ships_window)
+        self.config_window.establish_communication(
+            self.create_arrange_the_ships_window)
 
-    def create_arrange_the_ships_window(self, permission, three_dimensional_map, ai_level):
+    def create_arrange_the_ships_window(
+            self, permission, three_dimensional_map, ai_level):
         self.three_dimensional_map = three_dimensional_map
         self.ai_level = ai_level
 
@@ -32,12 +34,16 @@ class Application:
         self.arrange_the_ships \
             = ArrangeTheShipsLogic(
               self.field_size, self.three_dimensional_map, for_test=False)
-        self.arrange_the_ships.establish_communication(self.go_to_the_game)
+        self.arrange_the_ships.establish_communication(
+            self.go_to_the_game)
 
-    def go_to_the_game(self, information: list, number_of_ships_per_level: Dict[int, int]):
+    def go_to_the_game(self, information: list,
+                       number_of_ships_per_level: Dict[int, int]):
         self.arrange_the_ships.hide_window()
         field = Field(information)
-        self.game = Game(self.field_size, self.three_dimensional_map, field.ships, number_of_ships_per_level)
+        self.game = Game(self.field_size,
+                         self.three_dimensional_map,
+                         field.ships, number_of_ships_per_level)
 
 
 if __name__ == '__main__':

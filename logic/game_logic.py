@@ -20,12 +20,14 @@ class Game:
         self.game_is_over = False
         self.now_the_player_turn = True
 
-        self.number_of_enemy_ships_first_level: Dict[int, int] = {}
-        self.number_of_enemy_ships_second_level: Dict[int, int] = {}
+        self.number_of_enemy_ships_first_level = {}
+        self.number_of_enemy_ships_second_level = {}
 
-        self.number_of_enemy_ships_first_level = copy(number_of_ships_per_level)
+        self.number_of_enemy_ships_first_level \
+            = copy(number_of_ships_per_level)
         if self.three_dimensional:
-            self.number_of_enemy_ships_second_level = copy(number_of_ships_per_level)
+            self.number_of_enemy_ships_second_level \
+                = copy(number_of_ships_per_level)
 
         self.stopwatch_for_ai = self.create_stopwatch()
         self.stopwatch_time = QtCore.QTime(0, 0, 0)
@@ -51,16 +53,21 @@ class Game:
 
     def shot_handler(self, unit: str, level: int, point: (int, int)):
         if unit == 'enemy':
-            response, ship_or_none_if_its_not_kill = self.enemy.process_a_shot(level, point)
+            response, ship_or_none_if_its_not_kill \
+                = self.enemy.process_a_shot(level, point)
         else:
-            response, ship_or_none_if_its_not_kill = self.player.process_a_shot(level, point)
+            response, ship_or_none_if_its_not_kill \
+                = self.player.process_a_shot(level, point)
         if response == 'wound':
             self.game_window.display_a_hit(unit, level, point, fluf=False)
         elif response == 'kill':
-            self.game_window.display_the_destruction(unit, level, ship_or_none_if_its_not_kill)
+            self.game_window.display_the_destruction(
+                unit, level, ship_or_none_if_its_not_kill)
         elif response == 'fluffed':
             self.game_window.display_a_hit(unit, level, point, fluf=True)
-        self.game_is_over = not self.enemy.live_ships_remained() or not self.player.live_ships_remained()
+        self.game_is_over \
+            = not self.enemy.live_ships_remained() \
+            or not self.player.live_ships_remained()
         if self.game_is_over:
             self.finish_the_game(loser=unit)
         return ship_or_none_if_its_not_kill
@@ -82,8 +89,9 @@ class Game:
     def update_info_about_current_situation_on_game(
             self, whose_turn: str, last_shooter: str,
             level: int, point: Tuple[int, int]) -> None:
-        self.game_window.update_text_on_label_with_info_about_the_course_of_the_game(
-            whose_turn, last_shooter, level, point)
+        self.game_window\
+            .update_text_on_label_with_info_about_the_course_of_the_game(
+             whose_turn, last_shooter, level, point)
 
     def player_shot_handler(self, level: int, point: (int, int)):
         if not self.game_is_over:
@@ -92,23 +100,28 @@ class Game:
                 if output is not None:
                     ship_length = len(output)
                     if level == 0:
-                        self.number_of_enemy_ships_first_level[ship_length] -= 1
+                        self.number_of_enemy_ships_first_level[
+                            ship_length] -= 1
                     else:
-                        self.number_of_enemy_ships_second_level[ship_length] -= 1
+                        self.number_of_enemy_ships_second_level[
+                            ship_length] -= 1
                     self.update_info_data_about_destroyed_ships()
                 self.now_the_player_turn = False
-                self.update_info_about_current_situation_on_game('enemy', 'player', level, point)
+                self.update_info_about_current_situation_on_game(
+                    'enemy', 'player', level, point)
 
     def enemy_shot_handler(self, level: int, point: (int, int)):
         if not self.game_is_over:
             if not self.now_the_player_turn:
                 output = self.shot_handler('player', level, point)
                 self.now_the_player_turn = True
-                self.update_info_about_current_situation_on_game('player', 'enemy', level, point)
+                self.update_info_about_current_situation_on_game(
+                    'player', 'enemy', level, point)
                 return output
 
     def create_window(self):
-        self.game_window = GameWindow(self.one_field_size, self.three_dimensional)
+        self.game_window = GameWindow(
+            self.one_field_size, self.three_dimensional)
         self.game_window.establish_connection(self.player_shot_handler)
         self.game_window.setupUi()
         self.game_window.show()
