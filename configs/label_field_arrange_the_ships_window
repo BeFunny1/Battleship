@@ -17,5 +17,5 @@
     "y_start": [45, 152, 55, 16],
     "y_end": [45, 452, 55, 16]
   },
-  "sub_level_activate": [300, 60, 90, 20]
+  "sub_level_activate": [300, 60, 110, 20]
 }
