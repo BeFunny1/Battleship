@@ -1,5 +1,4 @@
 import sys
-from functools import partial
 from typing import Dict, List, Tuple
 
 from PyQt5 import QtWidgets, QtCore, QtGui

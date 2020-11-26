@@ -145,7 +145,6 @@ class GameWindow(QMainWindow):
     def display_all_player_ship(self, ships: []) -> None:
         for ship in ships:
             level = ship.level
-            text = str(ship.size)
             for position in ship.position:
                 x = position[0]
                 y = position[1]

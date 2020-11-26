@@ -242,11 +242,11 @@ class WindowCreateHelper:
                     central_widget, data_for_fields['submarine'], hide=True)
         return label_fields_first_level, label_fields_second_level
 
+    @staticmethod
     def create_field_buttons(
-            self, central_widget, field_size: Tuple[int, int], coordinate_grid: Tuple[List[int], List[int]],
+            central_widget, field_size: Tuple[int, int], coordinate_grid: Tuple[List[int], List[int]],
             three_dimensional: bool, make_button_active: bool, method_for_connect_clicked) \
             -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
-        style = self.config_parser.read_config_file('styles_for_element')
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = {0: {}, 1: {}}
         x_coordinate_grid, y_coordinate_grid \
