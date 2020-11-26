@@ -43,7 +43,8 @@ class Application:
         field = Field(information)
         self.game = Game(self.field_size,
                          self.three_dimensional_map,
-                         field.ships, number_of_ships_per_level)
+                         field.ships, number_of_ships_per_level,
+                         self.ai_level)
 
 
 if __name__ == '__main__':

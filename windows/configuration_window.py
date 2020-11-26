@@ -74,7 +74,7 @@ class ConfigurationWindow(QMainWindow):
     def create_radio_button_for_AI_difficult_level(self) \
             -> [QtWidgets.QRadioButton]:
         radio_buttons = []
-        options = ['Easy', 'Normal', 'Hard']
+        options = ['Very easy', 'Easy', 'Normal']
         for x in range(3):
             radio_button = QtWidgets.QRadioButton(self.central_widget)
             radio_button.setGeometry(QtCore.QRect(50, 170 + 20 * x, 95, 20))
@@ -97,7 +97,7 @@ class ConfigurationWindow(QMainWindow):
     def take_final_configuration(self) -> None:
         three_dimensional_map = bool(self.check_box_for_3D_field.checkState())
         permission = self.combo_box_for_choice_permission.currentText()
-        ai_level = 'easy'
+        ai_level = 'Very easy'
         for option in self.radio_button_for_AI_difficult_level:
             if option.isChecked():
                 ai_level = option.text().lower()

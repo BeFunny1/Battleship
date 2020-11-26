@@ -280,19 +280,26 @@ class GameWindow(QMainWindow):
                 self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
             self.player_buttons[level][x][y].setEnabled(False)
 
-    def display_the_destruction(self, unit: str, level: int, ship: []) -> None:
-        start_x = max(0, ship[0][0] - 1)
-        start_y = max(0, ship[0][1] - 1)
-        end_x = min(self.one_field_size[0] - 1, ship[-1][0] + 1)
-        end_y = min(self.one_field_size[1] - 1, ship[-1][1] + 1)
-        if unit == 'player':
-            field = self.player_buttons
-        else:
-            field = self.enemy_buttons
-        for x in range(start_x, end_x + 1):
-            for y in range(start_y, end_y + 1):
-                field[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
-                field[level][x][y].setEnabled(False)
+    def display_the_destruction(self, unit: str, level: int, ship: [], ai_level: str) -> None:
+        opposite_parties = {
+            'player': 'enemy',
+            'enemy': 'player'
+        }
+        who_shoot = opposite_parties[unit]
+
+        if who_shoot == 'player' or (who_shoot == 'enemy' and ai_level != 'very easy'):
+            start_x = max(0, ship[0][0] - 1)
+            start_y = max(0, ship[0][1] - 1)
+            end_x = min(self.one_field_size[0] - 1, ship[-1][0] + 1)
+            end_y = min(self.one_field_size[1] - 1, ship[-1][1] + 1)
+            if unit == 'player':
+                field = self.player_buttons
+            else:
+                field = self.enemy_buttons
+            for x in range(start_x, end_x + 1):
+                for y in range(start_y, end_y + 1):
+                    field[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
+                    field[level][x][y].setEnabled(False)
         for point in ship:
             self.display_a_hit(unit, level, point, fluf=False)
 
