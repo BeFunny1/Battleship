@@ -1,3 +1,6 @@
+from typing import Tuple
+
+
 class Player:
     def __init__(self, ships: []):
         self.field = ships
@@ -13,7 +16,7 @@ class Player:
             return 'wound', None
         return 'fluffed', None
 
-    def is_a_ship(self, level: int, point: (int, int)) -> (bool, int):
+    def is_a_ship(self, level: int, point: (int, int)) -> Tuple[bool, int]:
         for index, ship in enumerate(self.field):
             if ship.level == level:
                 if point in ship.position:

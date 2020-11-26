@@ -10,7 +10,7 @@ from work_with_confg.config_handler import ConfigHandler
 
 
 class ArrangeTheShipsWindow(QMainWindow):
-    def __init__(self, field_size: (int, int), three_dimensional: bool):
+    def __init__(self, field_size: (int, int), three_dimensional: bool) -> None:
         super().__init__()
         self.config_parser = ConfigHandler()
         self.window_create_helper = WindowCreateHelper()
@@ -22,24 +22,27 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.current_level: int = 0
-        self.interval_x: Tuple[int, int] = (0, 15) if self.field_size[0] >= 15 else (0, 9)
-        self.interval_y: Tuple[int, int] = (0, 15) if self.field_size[1] >= 15 else (0, 9)
+        self.interval_x: Tuple[int, int] \
+            = (0, 15) if self.field_size[0] >= 15 else (0, 9)
+        self.interval_y: Tuple[int, int] \
+            = (0, 15) if self.field_size[1] >= 15 else (0, 9)
 
-        self.labels_first_lvl = None
-        self.labels_second_lvl = None
+        self.labels_first_lvl: List[QtWidgets.QLabel] = None
+        self.labels_second_lvl: List[QtWidgets.QLabel] = None
 
-        self.button_del_activity = False
-        self.labels_for_display_interval = None
-        self.field_button = None
-        self.label_fields_first_level = None
-        self.label_fields_second_level = None
-        self.activate_delete_label = None
-        self.start_game_button = None
+        self.button_del_activity: bool = False
+
+        self.labels_for_display_interval: Dict[str, QtWidgets.QLabel] = None
+        self.field_button: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = None
+        self.label_fields_first_level: Dict[str, QtWidgets.QLabel] = None
+        self.label_fields_second_level: Dict[str, QtWidgets.QLabel] = None
+        self.activate_delete_label: QtWidgets.QLabel = None
+        self.start_game_button: QtWidgets.QPushButton = None
 
         self.customer = None
         self.exit_the_window = None
 
-    def establish_communication(self, customer, exit_the_window):
+    def establish_communication(self, customer, exit_the_window) -> None:
         self.customer = customer
         self.exit_the_window = exit_the_window
 
@@ -82,13 +85,13 @@ class ArrangeTheShipsWindow(QMainWindow):
                 self.current_level, area=(self.interval_x, self.interval_y))
             self.update_labels_with_intervals()
 
-    def create_labels_with_intervals(self):
+    def create_labels_with_intervals(self) -> Dict[str, QtWidgets.QLabel]:
         labels: Dict[str, QtWidgets.QLabel] \
             = self.window_create_helper.create_labels_with_intervals(
             self.central_widget, config_file='label_field_arrange_the_ships_window')
         return labels
 
-    def update_labels_with_intervals(self):
+    def update_labels_with_intervals(self) -> None:
         self.window_create_helper.update_labels_with_intervals(
             config_name='label_field_arrange_the_ships_window', interval_x=self.interval_x,
             interval_y=self.interval_y, labels_for_display_interval=self.labels_for_display_interval)
@@ -97,9 +100,8 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.window_create_helper.hide_all_field_button(
             first_field_button=self.field_button, second_field_button=None)
 
-    def show_area_field_button(self, level: int,
-                               area: Tuple[Tuple[int, int],
-                                           Tuple[int, int]]) -> None:
+    def show_area_field_button(
+            self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
         self.window_create_helper.show_area_field_button(
             first_field_button=self.field_button,
             second_field_button=None,
@@ -129,7 +131,7 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.change_the_display_of_buttons()
         self.change_the_display_labels(result)
 
-    def change_the_display_labels(self, result: bool):
+    def change_the_display_labels(self, result: bool) -> None:
         self.window_create_helper.change_the_display_labels(
             label_fields_first_level=self.label_fields_first_level,
             label_fields_second_level=self.label_fields_second_level,
@@ -173,7 +175,7 @@ class ArrangeTheShipsWindow(QMainWindow):
             y_coordinates.append(y_start + i * 20)
         return x_coordinates, y_coordinates
 
-    def switch_start_game_button(self, toggle: bool):
+    def switch_start_game_button(self, toggle: bool) -> None:
         self.start_game_button.setEnabled(toggle)
 
     def create_start_game_button(self) -> QtWidgets.QPushButton:
@@ -195,8 +197,8 @@ class ArrangeTheShipsWindow(QMainWindow):
         del_button.clicked.connect(self.del_button_event)
         return del_button
 
-    def update_buttons_text(self, level: int,
-                            x: int, y: int, text: str) -> None:
+    def update_buttons_text(
+            self, level: int, x: int, y: int, text: str) -> None:
         self.field_button[level][x][y].setText(text)
 
     def del_button_event(self) -> None:
@@ -209,9 +211,8 @@ class ArrangeTheShipsWindow(QMainWindow):
         self.activate_delete_label.setText(new_text)
         self.button_del_activity = not self.button_del_activity
 
-    def create_label_fields(self) -> \
-            Tuple[Dict[str, QtWidgets.QLabel],
-                  Dict[str, QtWidgets.QLabel], QtWidgets.QLabel]:
+    def create_label_fields(self) \
+            -> Tuple[Dict[str, QtWidgets.QLabel], Dict[str, QtWidgets.QLabel], QtWidgets.QLabel]:
         label_fields_first_level, label_fields_second_level \
             = self.window_create_helper.create_label_fields(
               config_name='label_field_arrange_the_ships_window',
@@ -231,9 +232,8 @@ class ArrangeTheShipsWindow(QMainWindow):
         activate_delete_label.setText('деактивирован')
         return activate_delete_label
 
-    def create_inscriptions(self) -> \
-            Tuple[List[QtWidgets.QLabel],
-                  List[QtWidgets.QLabel]]:
+    def create_inscriptions(self) \
+            -> Tuple[List[QtWidgets.QLabel], List[QtWidgets.QLabel]]:
         labels_first_lvl: List[QtWidgets.QLabel] = []
         labels_second_lvl: List[QtWidgets.QLabel] = []
         labels_first_lvl, labels_second_lvl \
@@ -243,14 +243,14 @@ class ArrangeTheShipsWindow(QMainWindow):
               config_name='inscriptions_and_geometric_data_arrange_the_ships_window')
         return labels_first_lvl, labels_second_lvl
 
-    def create_unchanged_labels(self, data: Dict[str, List[int]],
-                                hide: bool) -> List[QtWidgets.QLabel]:
+    def create_unchanged_labels(
+            self, data: Dict[str, List[int]], hide: bool) -> List[QtWidgets.QLabel]:
         labels: List[QtWidgets.QLabel] \
             = self.window_create_helper.create_unchanged_labels(
               self.central_widget, data, hide=hide)
         return labels
 
-    def customize_window(self):
+    def customize_window(self) -> None:
         window_size = self.calculate_window_size()
         self.window_create_helper.customize_window(self, 'Расставление кораблей', window_size)
 

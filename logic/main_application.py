@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 from logic.arrange_the_ships_logic import ArrangeTheShipsLogic
 from logic.field import Field
@@ -8,15 +8,15 @@ from windows.configuration_window import ConfigurationWindow
 
 class Application:
     def __init__(self):
-        self.config_window = None
-        self.arrange_the_ships = None
-        self.game = None
+        self.config_window: ConfigurationWindow = None
+        self.arrange_the_ships: ArrangeTheShipsLogic = None
+        self.game: Game = None
 
-        self.field_size = None
-        self.ai_level = None
-        self.three_dimensional_map = None
+        self.field_size: Tuple[int, int] = None
+        self.ai_level: str = None
+        self.three_dimensional_map: bool = None
 
-    def create_config_window(self):
+    def create_config_window(self) -> None:
         self.config_window = ConfigurationWindow()
         self.config_window.setupUi()
         self.config_window.show()
@@ -24,12 +24,12 @@ class Application:
             self.create_arrange_the_ships_window)
 
     def create_arrange_the_ships_window(
-            self, permission, three_dimensional_map, ai_level):
+            self, permission, three_dimensional_map, ai_level) -> None:
         self.three_dimensional_map = three_dimensional_map
         self.ai_level = ai_level
 
         self.config_window.hide()
-        self.field_size = list(map(int, permission.split('x')))
+        self.field_size = tuple(map(int, permission.split('x')))
 
         self.arrange_the_ships \
             = ArrangeTheShipsLogic(
@@ -37,8 +37,8 @@ class Application:
         self.arrange_the_ships.establish_communication(
             self.go_to_the_game)
 
-    def go_to_the_game(self, information: list,
-                       number_of_ships_per_level: Dict[int, int]):
+    def go_to_the_game(
+            self, information: list, number_of_ships_per_level: Dict[int, int]) -> None:
         self.arrange_the_ships.hide_window()
         field = Field(information)
         self.game = Game(self.field_size,

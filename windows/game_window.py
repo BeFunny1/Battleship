@@ -15,22 +15,27 @@ class GameWindow(QMainWindow):
         self.window_create_helper = WindowCreateHelper()
         self.one_field_size = one_field_size
         self.three_dimensional = three_dimensional
-        self.player_buttons = None
-        self.enemy_buttons = None
-        self.button_to_change_level = None
-        self.labels_field = None
+
         self.player_shot_handler = None
-        self.labels_first_lvl = None
-        self.labels_second_lvl = None
+
+        self.player_buttons: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = None
+        self.enemy_buttons: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = None
+        self.button_to_change_level: QtWidgets.QPushButton = None
+
+        self.labels_first_lvl: List[QtWidgets.QLabel] = None
+        self.labels_second_lvl: List[QtWidgets.QLabel] = None
 
         self.current_level: int = 0
-        self.interval_x: Tuple[int, int] = (0, 15) if self.one_field_size[0] >= 15 else (0, 9)
-        self.interval_y: Tuple[int, int] = (0, 15) if self.one_field_size[1] >= 15 else (0, 9)
+        self.interval_x: Tuple[int, int] \
+            = (0, 15) if self.one_field_size[0] >= 15 else (0, 9)
+        self.interval_y: Tuple[int, int] \
+            = (0, 15) if self.one_field_size[1] >= 15 else (0, 9)
 
-        self.labels_for_display_interval = None
+        self.labels_for_display_interval: Dict[str, QtWidgets.QLabel] = None
         self.label_with_info_about_the_course_of_the_game: QtWidgets.QLabel \
             = None
         self.final_caption_labels: Dict[str, QtWidgets.QLabel] = {}
+
         self.label_fields_first_level: Dict[str, QtWidgets.QLabel] = {}
         self.label_fields_second_level: Dict[str, QtWidgets.QLabel] = {}
 
@@ -59,14 +64,14 @@ class GameWindow(QMainWindow):
         if self.three_dimensional:
             self.button_to_change_level = self.create_button_to_change_levels()
 
-    def create_labels_with_intervals(self):
+    def create_labels_with_intervals(self) -> Dict[str, QtWidgets.QLabel]:
         labels: Dict[str, QtWidgets.QLabel] \
             = self.window_create_helper.create_labels_with_intervals(
             self.central_widget, 'label_field_game_window')
         return labels
 
-    def create_direction_arrows_button(self) ->\
-            Dict[str, QtWidgets.QPushButton]:
+    def create_direction_arrows_button(self) \
+            -> Dict[str, QtWidgets.QPushButton]:
         arrows_button: Dict[str, QtWidgets.QPushButton] = \
             self.window_create_helper.create_direction_arrows_button(
                 window='game', central_widget=self.central_widget,
@@ -87,16 +92,14 @@ class GameWindow(QMainWindow):
         self.window_create_helper.hide_all_field_button(
             first_field_button=self.player_buttons, second_field_button=self.enemy_buttons)
 
-    def show_area_field_button(self, level: int,
-                               area: Tuple[Tuple[int, int],
-                                           Tuple[int, int]]) -> None:
+    def show_area_field_button(
+            self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
         self.window_create_helper.show_area_field_button(
             first_field_button=self.player_buttons,
             second_field_button=self.enemy_buttons,
             level=level, area=area)
 
-    def create_label_with_info_about_the_course_of_the_game(self) ->\
-            QtWidgets.QLabel:
+    def create_label_with_info_about_the_course_of_the_game(self) -> QtWidgets.QLabel:
         text = 'Текущий ход: player. Последний выстрел: , уровень: , точка: '
         x, y, width, height = [0, 120, self.width(), 20]
         label = QtWidgets.QLabel(self.central_widget)
@@ -139,7 +142,7 @@ class GameWindow(QMainWindow):
     def display_game_is_over_caption(self, winner: str) -> None:
         self.final_caption_labels[winner].show()
 
-    def display_all_player_ship(self, ships: []):
+    def display_all_player_ship(self, ships: []) -> None:
         for ship in ships:
             level = ship.level
             text = str(ship.size)
@@ -176,8 +179,8 @@ class GameWindow(QMainWindow):
               config_name='inscriptions_and_geometric_data_game_window')
         return labels_first_lvl, labels_second_lvl
 
-    def create_unchanged_labels(self, data: Dict[str, List[int]],
-                                hide: bool) -> List[QtWidgets.QLabel]:
+    def create_unchanged_labels(
+            self, data: Dict[str, List[int]], hide: bool) -> List[QtWidgets.QLabel]:
         labels: List[QtWidgets.QLabel] \
             = self.window_create_helper.create_unchanged_labels(
             self.central_widget, data, hide=hide)
@@ -218,12 +221,14 @@ class GameWindow(QMainWindow):
             self, data: List[QtWidgets.QLabel], show: bool) -> None:
         self.window_create_helper.change_the_display_unchanged_labels(data, show)
 
-    def create_field_buttons_player(self) -> {}:
+    def create_field_buttons_player(self) \
+            -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         start_x_player = 40
         buttons = self.create_field_buttons(start_x_player, is_a_player=True)
         return buttons
 
-    def create_field_buttons_enemy(self) -> {}:
+    def create_field_buttons_enemy(self) \
+            -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         if self.one_field_size[0] > 15:
             start_x_enemy = 40 + 20 * 16 + 50
         else:
@@ -231,10 +236,10 @@ class GameWindow(QMainWindow):
         buttons = self.create_field_buttons(start_x_enemy, is_a_player=False)
         return buttons
 
-    def establish_connection(self, player_shot_handler):
+    def establish_connection(self, player_shot_handler) -> None:
         self.player_shot_handler = player_shot_handler
 
-    def update_labels_with_intervals(self):
+    def update_labels_with_intervals(self) -> None:
         self.window_create_helper.update_labels_with_intervals(
             config_name='label_field_game_window', interval_x=self.interval_x,
             interval_y=self.interval_y, labels_for_display_interval=self.labels_for_display_interval)
@@ -248,7 +253,8 @@ class GameWindow(QMainWindow):
             y_coordinates.append(178 + i * 20)
         return x_coordinates, y_coordinates
 
-    def create_field_buttons(self, start_x: int, is_a_player: bool) -> {}:
+    def create_field_buttons(self, start_x: int, is_a_player: bool) \
+            -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         coordinate_grid = self.get_coordinate_grid(start_x)
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = self.window_create_helper.create_field_buttons(
@@ -257,8 +263,8 @@ class GameWindow(QMainWindow):
             make_button_active=not is_a_player, method_for_connect_clicked=self.player_shot_handler)
         return field
 
-    def display_a_hit(self, unit: str, level: int,
-                      point: (int, int), fluf: bool) -> None:
+    def display_a_hit(
+            self, unit: str, level: int, point: (int, int), fluf: bool) -> None:
         if unit == 'enemy':
             x, y = point
             if fluf:
@@ -274,7 +280,7 @@ class GameWindow(QMainWindow):
                 self.player_buttons[level][x][y].setText('#')
             self.player_buttons[level][x][y].setEnabled(False)
 
-    def display_the_destruction(self, unit: str, level: int, ship: []):
+    def display_the_destruction(self, unit: str, level: int, ship: []) -> None:
         start_x = max(0, ship[0][0] - 1)
         start_y = max(0, ship[0][1] - 1)
         end_x = min(self.one_field_size[0] - 1, ship[-1][0] + 1)

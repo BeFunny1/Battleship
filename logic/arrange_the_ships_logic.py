@@ -6,7 +6,7 @@ from windows.arrange_the_ships_window import ArrangeTheShipsWindow
 
 
 class ArrangeTheShipsLogic:
-    def __init__(self, field_size: (int, int),
+    def __init__(self, field_size: Tuple[int, int],
                  three_dimensional: bool, for_test: bool):
         self.for_test = for_test
         self.field_size = field_size

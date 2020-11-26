@@ -11,15 +11,15 @@ class ConfigurationWindow(QMainWindow):
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
 
-        self.inscriptions = None
-        self.continuation_button = None
-        self.check_box_for_3D_field = None
-        self.radio_button_for_AI_difficult_level = None
-        self.combo_box_for_choice_permission = None
+        self.inscriptions: [QtWidgets.QLabel] = None
+        self.continuation_button: QtWidgets.QPushButton = None
+        self.check_box_for_3D_field: QtWidgets.QCheckBox = None
+        self.radio_button_for_AI_difficult_level: [QtWidgets.QRadioButton] = None
+        self.combo_box_for_choice_permission: QtWidgets.QComboBox = None
 
         self.customer = None
 
-    def establish_communication(self, customer):
+    def establish_communication(self, customer) -> None:
         self.customer = customer
 
     def setupUi(self) -> None:
@@ -71,8 +71,8 @@ class ConfigurationWindow(QMainWindow):
         check_box.setText('3D поле')
         return check_box
 
-    def create_radio_button_for_AI_difficult_level(self) ->\
-            [QtWidgets.QRadioButton]:
+    def create_radio_button_for_AI_difficult_level(self) \
+            -> [QtWidgets.QRadioButton]:
         radio_buttons = []
         options = ['Easy', 'Normal', 'Hard']
         for x in range(3):
@@ -94,7 +94,7 @@ class ConfigurationWindow(QMainWindow):
             combo_box.addItem(item)
         return combo_box
 
-    def take_final_configuration(self):
+    def take_final_configuration(self) -> None:
         three_dimensional_map = bool(self.check_box_for_3D_field.checkState())
         permission = self.combo_box_for_choice_permission.currentText()
         ai_level = 'easy'

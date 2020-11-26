@@ -188,7 +188,7 @@ class WindowCreateHelper:
                                     current_level, (interval_x, interval_y))
 
     @staticmethod
-    def change_text_level_button(button_to_change_levels: QtWidgets.QPushButton):
+    def change_text_level_button(button_to_change_levels: QtWidgets.QPushButton) -> None:
         reverse_phrases = {
             'Перейти на нижний уровень': 'Перейти на верхний уровень',
             'Перейти на верхний уровень': 'Перейти на нижний уровень'
@@ -217,7 +217,7 @@ class WindowCreateHelper:
             self, label_fields_first_level: Dict[str, QtWidgets.QLabel],
             label_fields_second_level: Dict[str, QtWidgets.QLabel],
             labels_first_lvl: List[QtWidgets.QLabel],
-            labels_second_lvl: List[QtWidgets.QLabel], result: bool):
+            labels_second_lvl: List[QtWidgets.QLabel], result: bool) -> None:
         self.change_the_display_changed_labels(
             label_fields_second_level, show=result)
         self.change_the_display_changed_labels(
@@ -228,7 +228,8 @@ class WindowCreateHelper:
         self.change_the_display_unchanged_labels(
             labels_first_lvl, show=not result)
 
-    def create_label_fields(self, config_name: str, three_dimensional: bool, central_widget):
+    def create_label_fields(self, config_name: str, three_dimensional: bool, central_widget) \
+            -> Tuple[Dict[str, QtWidgets.QLabel], Dict[str, QtWidgets.QLabel]]:
         data_for_fields = self.config_parser.read_config_file(config_name)
         label_fields_first_level: Dict[str, QtWidgets.QLabel] = {}
         label_fields_second_level: Dict[str, QtWidgets.QLabel] = {}
@@ -243,7 +244,8 @@ class WindowCreateHelper:
 
     def create_field_buttons(
             self, central_widget, field_size: Tuple[int, int], coordinate_grid: Tuple[List[int], List[int]],
-            three_dimensional: bool, make_button_active: bool, method_for_connect_clicked) -> {}:
+            three_dimensional: bool, make_button_active: bool, method_for_connect_clicked) \
+            -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         style = self.config_parser.read_config_file('styles_for_element')
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = {0: {}, 1: {}}

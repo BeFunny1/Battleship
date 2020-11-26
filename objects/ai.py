@@ -1,17 +1,20 @@
+from typing import List, Tuple
+
 from logic.arrange_the_ships_logic import ArrangeTheShipsLogic
 from random import randint
 
 from logic.field import Field
+from objects.ship import Ship
 
 
 class AI:
     def __init__(self, field_size: [int], three_dimensional: bool):
-        self.field_size = field_size
-        self.three_dimensional = three_dimensional
-        self.field = self.place_ships()
-        self.where_did_i_shoot = []
+        self.field_size: Tuple[int, int] = field_size
+        self.three_dimensional: bool = three_dimensional
+        self.ships: List[Ship] = self.place_ships()
+        self.where_did_i_shoot: List[Tuple[int, int]] = []
 
-    def place_ships(self) -> list:
+    def place_ships(self) -> List[Ship]:
         handler = ArrangeTheShipsLogic(
             self.field_size, self.three_dimensional, for_test=True)
         number_of_cells = self.field_size[0] * self.field_size[1]
@@ -35,10 +38,10 @@ class AI:
         field = Field(information_about_all_related_entity)
         return field.ships
 
-    def process_a_shot(self, level: int, point: (int, int)):
+    def process_a_shot(self, level: int, point: (int, int)) -> Tuple[str, List[Tuple[int, int]]]:
         check, index_ship = self.is_a_ship(level, point)
         if check:
-            ship = self.field[index_ship]
+            ship = self.ships[index_ship]
             ship.size -= 1
             if ship.size == 0:
                 ship.alive = False
@@ -46,14 +49,14 @@ class AI:
             return 'wound', None
         return 'fluffed', None
 
-    def is_a_ship(self, level: int, point: (int, int)) -> (bool, int):
-        for index, ship in enumerate(self.field):
+    def is_a_ship(self, level: int, point: (int, int)) -> Tuple[bool, int]:
+        for index, ship in enumerate(self.ships):
             if ship.level == level:
                 if point in ship.position:
                     return True, index
         return False, None
 
-    def update_used_cells(self, ship):
+    def update_used_cells(self, ship) -> None:
         start_x = max(0, ship[0][0] - 1)
         start_y = max(0, ship[0][1] - 1)
         end_x = min(self.field_size[0] - 1, ship[-1][0] + 1)
@@ -63,7 +66,7 @@ class AI:
                 if (x, y) not in self.where_did_i_shoot:
                     self.where_did_i_shoot.append((x, y))
 
-    def do_shoot(self):
+    def do_shoot(self) -> Tuple[int, Tuple[int, int]]:
         level = 0
         if self.three_dimensional:
             level = randint(0, 1)
@@ -74,7 +77,7 @@ class AI:
             return level, (x, y)
 
     def live_ships_remained(self) -> bool:
-        for ship in self.field:
+        for ship in self.ships:
             if ship.alive:
                 return True
         return False
