@@ -138,6 +138,139 @@ class ArrangeTheShipsLogicTest(unittest.TestCase):
                  number_of_cells[index])
             self.assertEqual(expected, actual)
 
+    def test_user_can_pick_this_cell_null_length(self):
+        actual_lvl_one = self.arrange_the_ships_logic.user_can_pick_this_cell(level=0)
+        actual_lvl_two = self.arrange_the_ships_logic.user_can_pick_this_cell(level=1)
+        expected = False
+        self.assertEqual(expected, actual_lvl_one)
+        self.assertEqual(expected, actual_lvl_two)
+
+    def test_user_can_pick_this_cell_not_null_length(self):
+        self.arrange_the_ships_logic.stack_related_entity_first_lvl.append(1)
+        self.arrange_the_ships_logic.stack_related_entity_second_lvl.append(1)
+
+        actual_lvl_one = self.arrange_the_ships_logic.user_can_pick_this_cell(level=0)
+        actual_lvl_two = self.arrange_the_ships_logic.user_can_pick_this_cell(level=1)
+        expected = True
+        self.assertEqual(expected, actual_lvl_one)
+        self.assertEqual(expected, actual_lvl_two)
+
+    def test_all_ships_arrange_both_stack_empty(self):
+        actual = self.arrange_the_ships_logic.all_ships_arrange()
+        expected = True
+        self.assertEqual(expected, actual)
+
+    def test_all_ships_arrange_one_stack_not_empty(self):
+        self.arrange_the_ships_logic.stack_related_entity_first_lvl.append(1)
+        actual = self.arrange_the_ships_logic.all_ships_arrange()
+        expected = False
+        self.assertEqual(expected, actual)
+
+    def test_all_ships_arrange_both_stack_not_empty(self):
+        self.arrange_the_ships_logic.stack_related_entity_first_lvl.append(1)
+        self.arrange_the_ships_logic.stack_related_entity_second_lvl.append(1)
+        actual = self.arrange_the_ships_logic.all_ships_arrange()
+        expected = False
+        self.assertEqual(expected, actual)
+
+    def test_get_information_about_all_related_entity_with_related_entity(self):
+        level, x, y = 0, 0, 0
+        self.arrange_the_ships_logic.field_for_related_entity[level][x][y] = 1
+        actual = self.arrange_the_ships_logic.get_information_about_all_related_entity()
+        expected = [(0, [(0, 0)])]
+        self.assertEqual(expected, actual)
+
+    def test_get_information_about_all_related_entity_without_related_entity(self):
+        actual = self.arrange_the_ships_logic.get_information_about_all_related_entity()
+        expected = []
+        self.assertEqual(expected, actual)
+
+    def test_try_to_change_related_entity_axis_change_possible(self):
+        self.arrange_the_ships_logic.field_for_related_entity[0][0][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][1][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][2][0] = 3
+
+        self.arrange_the_ships_logic.try_to_change_related_entity_axis(0, (0, 0))
+        actual = self.arrange_the_ships_logic.get_information_about_all_related_entity()
+        expected = [(0, [(0, 0), (0, 1), (0, 2)])]
+        self.assertEqual(expected, actual)
+
+    def test_try_to_change_related_entity_axis_change_impossible(self):
+        self.arrange_the_ships_logic.field_for_related_entity[0][0][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][1][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][2][0] = 3
+
+        self.arrange_the_ships_logic.field_for_related_entity[0][0][2] = 1
+
+        self.arrange_the_ships_logic.try_to_change_related_entity_axis(0, (0, 0))
+        actual = self.arrange_the_ships_logic.get_information_about_all_related_entity()
+        expected = [(0, [(0, 0), (1, 0), (2, 0)]), (0, [(0, 2)])]
+        self.assertEqual(expected, actual)
+
+    def test_delete_related_entity(self):
+        self.arrange_the_ships_logic.field_for_related_entity[0][0][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][1][0] = 3
+        self.arrange_the_ships_logic.field_for_related_entity[0][2][0] = 3
+
+        self.arrange_the_ships_logic.delete_related_entity(0, (0, 0))
+        actual = self.arrange_the_ships_logic.get_information_about_all_related_entity()
+        expected = []
+        self.assertEqual(expected, actual)
+
+    def test_check_possibility_of_placing_the_related_entity_possible(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 0
+        related_entity = [(0, 0), (0, 1), (0, 2)]
+        actual = self.arrange_the_ships_logic.check_possibility_of_placing_the_related_entity(0, related_entity)
+        expected = True
+        self.assertEqual(expected, actual)
+
+    def test_check_possibility_of_placing_the_related_entity_impossible(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 1
+        related_entity = [(0, 0), (0, 1), (0, 2)]
+        actual = self.arrange_the_ships_logic.check_possibility_of_placing_the_related_entity(0, related_entity)
+        expected = False
+        self.assertEqual(expected, actual)
+
+    def test_checking_the_placement_area_everything_is_available(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 0
+        actual = self.arrange_the_ships_logic.checking_the_placement_area(0, 0, 0, 1, 3)
+        expected = True
+        self.assertEqual(expected, actual)
+
+    def test_checking_the_placement_area_some_are_unavailable_but_area_available(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 0
+        self.arrange_the_ships_logic.field_for_related_entity[0][1][0] = 1
+        self.arrange_the_ships_logic.field_for_related_entity[0][2][0] = 1
+        actual = self.arrange_the_ships_logic.checking_the_placement_area(0, 3, 3, 5, 5)
+        expected = True
+        self.assertEqual(expected, actual)
+
+    def test_checking_the_placement_area_some_are_unavailable_and_area_unavailable(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 0
+        self.arrange_the_ships_logic.field_for_related_entity[0][1][0] = 1
+        self.arrange_the_ships_logic.field_for_related_entity[0][2][0] = 1
+        actual = self.arrange_the_ships_logic.checking_the_placement_area(0, 0, 0, 2, 2)
+        expected = False
+        self.assertEqual(expected, actual)
+
+    def test_checking_the_placement_area_some_everything_is_unavailable(self):
+        for x in range(10):
+            for y in range(10):
+                self.arrange_the_ships_logic.field_for_related_entity[0][x][y] = 1
+        actual = self.arrange_the_ships_logic.checking_the_placement_area(0, 0, 0, 2, 2)
+        expected = False
+        self.assertEqual(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
