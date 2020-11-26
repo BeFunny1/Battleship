@@ -121,8 +121,12 @@ class ArrangeTheShipsLogic:
                 level, axis, point, size_current_related_entity)
         self.erase_the_related_entity_from_the_field(
             level, current_related_entity)
-        self.stack_related_entity_first_lvl.append(
-            size_current_related_entity)
+        if level == 0:
+            self.stack_related_entity_first_lvl.append(
+                size_current_related_entity)
+        else:
+            self.stack_related_entity_second_lvl.append(
+                size_current_related_entity)
 
     def related_entity_placement(self, level: int, point: (int, int)):
         if level == 0:
