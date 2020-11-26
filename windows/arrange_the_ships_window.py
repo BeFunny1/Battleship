@@ -2,7 +2,7 @@ import sys
 from functools import partial
 from typing import Dict, List, Tuple
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QMainWindow
 
 from windows.window_create_helper import WindowCreateHelper
@@ -199,7 +199,10 @@ class ArrangeTheShipsWindow(QMainWindow):
 
     def update_buttons_text(
             self, level: int, x: int, y: int, text: str) -> None:
-        self.field_button[level][x][y].setText(text)
+        if text == '':
+            self.field_button[level][x][y].setIcon(QtGui.QIcon('./images/white_background.jpg'))
+        else:
+            self.field_button[level][x][y].setIcon(QtGui.QIcon('./images/ship.jpg'))
 
     def del_button_event(self) -> None:
         reverse_phrases = {

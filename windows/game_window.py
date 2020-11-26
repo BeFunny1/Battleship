@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Dict, List, Tuple
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 
 from windows.window_create_helper import WindowCreateHelper
@@ -149,7 +149,7 @@ class GameWindow(QMainWindow):
             for position in ship.position:
                 x = position[0]
                 y = position[1]
-                self.player_buttons[level][x][y].setText(text)
+                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/ship.jpg'))
 
     def update_info_on_label(
             self, data_first_lvl: dict, data_second_lvl: dict) -> None:
@@ -268,16 +268,16 @@ class GameWindow(QMainWindow):
         if unit == 'enemy':
             x, y = point
             if fluf:
-                self.enemy_buttons[level][x][y].setText('*')
+                self.enemy_buttons[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
             else:
-                self.enemy_buttons[level][x][y].setText('#')
+                self.enemy_buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
             self.enemy_buttons[level][x][y].setEnabled(False)
         else:
             x, y = point
             if fluf:
-                self.player_buttons[level][x][y].setText('*')
+                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
             else:
-                self.player_buttons[level][x][y].setText('#')
+                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
             self.player_buttons[level][x][y].setEnabled(False)
 
     def display_the_destruction(self, unit: str, level: int, ship: []) -> None:
@@ -291,7 +291,7 @@ class GameWindow(QMainWindow):
             field = self.enemy_buttons
         for x in range(start_x, end_x + 1):
             for y in range(start_y, end_y + 1):
-                field[level][x][y].setText('*')
+                field[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
                 field[level][x][y].setEnabled(False)
         for point in ship:
             self.display_a_hit(unit, level, point, fluf=False)

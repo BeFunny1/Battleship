@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Tuple, Dict, List
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from work_with_confg.config_handler import ConfigHandler
 
@@ -262,7 +262,7 @@ class WindowCreateHelper:
                     = x_coordinate_grid[x % 16], y_coordinate_grid[y % 16]
                 button.setGeometry(x_coordinate, y_coordinate, 20, 20)
                 button.setObjectName(f'button_field_{x}_{y}')
-                button.setStyleSheet(style['button'])
+                button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
                 if make_button_active:
                     button.clicked.connect(
                         partial(method_for_connect_clicked, 0, (x, y)))
@@ -277,7 +277,7 @@ class WindowCreateHelper:
                     sublevel_button\
                         .setObjectName(f'sublevel_button_field_{x}_{y}')
                     sublevel_button.setEnabled(make_button_active)
-                    sublevel_button.setStyleSheet(style['button'])
+                    sublevel_button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
                     sublevel_button.hide()
                     if make_button_active:
                         sublevel_button.clicked.connect(
