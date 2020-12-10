@@ -8,6 +8,7 @@ from random import randint
 
 from logic.field import Field
 from objects.ship import Ship
+from work_with_confg.config_handler import ConfigHandler
 
 
 class AI:
@@ -22,6 +23,9 @@ class AI:
         self.finishing_off: FinishingOff = FinishingOff(None, None, None, None)
 
         self.points_in_different_directions: List[Tuple[int, Tuple[int, int]]] = None
+
+        config_parser = ConfigHandler()
+        self.hits_statuses = config_parser.read_config_file('hits_statuses')
 
         self.stopwatch_for_ai = self.create_stopwatch()
         self.stopwatch_time: QtCore.QTime = QtCore.QTime(0, 0, 0)
@@ -74,10 +78,10 @@ class AI:
         return level, point
 
     def process_the_reaction_to_the_shot(self, response: str, level: int, point: Tuple[int, int]) -> None:
-        if response == 'kill':
+        if response == self.hits_statuses['kill']:
             self.finishing_off = FinishingOff(None, None, None, None)
             self.points_in_different_directions = None
-        elif response == 'wound':
+        elif response == self.hits_statuses['wound']:
             if self.finishing_off.point is None:
                 self.finishing_off = FinishingOff('unknown', level, point, point)
                 self.points_in_different_directions \
@@ -87,7 +91,7 @@ class AI:
                     self.finishing_off.direction = self.define_an_direction_by_two_points(
                         self.finishing_off.point, point)
                 self.finishing_off.point = point
-        elif response == 'fluffed' and self.finishing_off.direction not in ['unknown', None]:
+        elif response == self.hits_statuses['fluffed'] and self.finishing_off.direction not in ['unknown', None]:
             self.change_direction()
             self.finishing_off.point = self.finishing_off.original_point
 
@@ -150,8 +154,6 @@ class AI:
         number_of_ships \
             = handler.calculate_the_number_of_related_entity_on_the_field(
               number_of_cells)
-        handler.field_for_related_entity \
-            = handler.create_start_field_for_related_entity()
         handler.fill_stack_related_entity(number_of_ships)
         while len(handler.stack_related_entity_first_lvl) > 0 \
                 or len(handler.stack_related_entity_second_lvl) > 0:
@@ -174,11 +176,11 @@ class AI:
             ship.size -= 1
             if ship.size == 0:
                 ship.alive = False
-                return 'kill', ship.position
-            return 'wound', None
-        return 'fluffed', None
+                return self.hits_statuses['kill'], ship.position
+            return self.hits_statuses['wound'], None
+        return self.hits_statuses['fluffed'], None
 
-    def is_a_ship(self, level: int, point: (int, int)) -> Tuple[bool, int]:
+    def is_a_ship(self, level: int, point: Tuple[int, int]) -> Tuple[bool, int]:
         for index, ship in enumerate(self.ships):
             if ship.level == level:
                 if point in ship.position:

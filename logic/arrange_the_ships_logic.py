@@ -1,4 +1,5 @@
 import collections
+from copy import copy
 from itertools import repeat
 from typing import Dict, Tuple, List
 
@@ -12,7 +13,7 @@ class ArrangeTheShipsLogic:
         self.field_size: Tuple[int, int] = field_size
         self.three_dimensional: bool = three_dimensional
         self.arrange_the_ships_window = None
-        self.field_for_related_entity = None
+        self.field_for_related_entity = {}
         self.number_of_ships_per_level: Dict[int, int] = {}
         self.stack_related_entity_first_lvl: List[int] = []
         self.stack_related_entity_second_lvl: List[int] = []
@@ -70,28 +71,31 @@ class ArrangeTheShipsLogic:
 
     def get_information_about_all_related_entity(self) -> List[Tuple[int, Tuple[int, int]]]:
         information = []
-        for level in self.field_for_related_entity.keys():
-            for x in self.field_for_related_entity[level]:
-                for y in self.field_for_related_entity[level][x]:
-                    if self.is_a_related_entity(level, (x, y)):
-                        axis = self.determine_axis(level, (x, y))
-                        related_entity_size \
-                            = self.field_for_related_entity[level][x][y]
-                        related_entity = self.find_related_entity_on_the_field(
-                            level, axis, (x, y), related_entity_size)
-                        information.append((level, related_entity))
-                        self.erase_the_related_entity_from_the_field(
-                            level, related_entity)
+        collection_related_entity_before_change: Dict[Tuple[int, Tuple[int, int]], int] \
+            = copy(self.field_for_related_entity)
+        for related_entity in collection_related_entity_before_change:
+            if self.related_entity_is_still_valid(related_entity):
+                level = related_entity[0]
+                point = related_entity[1]
+                axis = self.determine_axis(level, point)
+                related_entity_size \
+                    = self.field_for_related_entity[(level, point)]
+                related_entity = self.find_related_entity_on_the_field(
+                    level, axis, point, related_entity_size)
+                information.append((level, related_entity))
+                self.erase_the_related_entity_from_the_field(level=level, related_entity=related_entity)
         return information
 
+    def related_entity_is_still_valid(self, related_entity_key) -> bool:
+        return related_entity_key in self.field_for_related_entity
+
     def try_to_change_related_entity_axis(self, level: int, point: Tuple[int, int]) -> None:
-        x, y = point
-        if self.field_for_related_entity[level][x][y] != 1:
+        if self.field_for_related_entity[(level, point)] != 1:
             reverse_axes = {'x': 'y', 'y': 'x'}
             axis = self.determine_axis(level, point)
             reverse_axis = reverse_axes[axis]
             size_current_related_entity \
-                = self.field_for_related_entity[level][x][y]
+                = self.field_for_related_entity[(level, point)]
 
             current_related_entity = self.find_related_entity_on_the_field(
                 level, axis, point, size_current_related_entity)
@@ -112,10 +116,9 @@ class ArrangeTheShipsLogic:
                     level, current_related_entity)
 
     def delete_related_entity(self, level: int, point: (int, int)) -> None:
-        x, y = point
         axis = self.determine_axis(level, point)
         size_current_related_entity \
-            = self.field_for_related_entity[level][x][y]
+            = self.field_for_related_entity[(level, point)]
         current_related_entity \
             = self.find_related_entity_on_the_field(
                 level, axis, point, size_current_related_entity)
@@ -161,7 +164,7 @@ class ArrangeTheShipsLogic:
             self, level: int, related_entity: []) -> None:
         for point in related_entity:
             x, y = point
-            self.field_for_related_entity[level][x][y] = 0
+            del self.field_for_related_entity[(level, (x, y))]
             if not self.for_test:
                 self.arrange_the_ships_window.update_buttons_text(
                     level, x, y, '')
@@ -201,22 +204,21 @@ class ArrangeTheShipsLogic:
             'y': [(x, y - 1), (x, y + 1)]
         }
         for axis in neighbors.keys():
-            for option in neighbors[axis]:
-                if 0 <= option[0] <= self.field_size[0] - 1 \
-                        and 0 <= option[1] <= self.field_size[1] - 1:
-                    if self.is_a_related_entity(level, option):
+            for option_point_neighbor in neighbors[axis]:
+                if 0 <= option_point_neighbor[0] <= self.field_size[0] - 1 \
+                        and 0 <= option_point_neighbor[1] <= self.field_size[1] - 1:
+                    if self.is_a_related_entity(level, option_point_neighbor):
                         return axis
         return standard_axis
 
     def is_a_related_entity(self, level: int, point: (int, int)) -> bool:
-        x, y = point
-        return self.field_for_related_entity[level][x][y]
+        return (level, point) in self.field_for_related_entity
 
     def add_related_entity_on_field(
             self, level: int, related_entity: list) -> None:
         for point in related_entity:
             x, y = point
-            self.field_for_related_entity[level][x][y] = len(related_entity)
+            self.field_for_related_entity[(level, point)] = len(related_entity)
             if not self.for_test:
                 self.arrange_the_ships_window.update_buttons_text(
                     level, x, y, str(len(related_entity)))
@@ -237,13 +239,8 @@ class ArrangeTheShipsLogic:
     def check_possibility_of_placing_the_related_entity(
             self, level: int, related_entity: []) -> bool:
         for point in related_entity:
-            x = point[0]
-            y = point[1]
-            if x not in self.field_for_related_entity[level].keys() \
-                    or \
-                    y not in self.field_for_related_entity[level][x].keys() \
-                    or \
-                    self.field_for_related_entity[level][x][y] != 0:
+            if self.is_a_related_entity(level, point) \
+                    or not self.this_point_on_field(point):
                 return False
 
         start_x = max(0, related_entity[0][0] - 1)
@@ -254,32 +251,23 @@ class ArrangeTheShipsLogic:
             level, start_x, start_y, end_x, end_y)
         return result
 
+    def this_point_on_field(self, point: Tuple[int, int]):
+        if point[0] < 0 or point[0] > self.field_size[0] - 1 \
+                or point[1] < 0 or point[1] > self.field_size[1] - 1:
+            return False
+        return True
+
     def checking_the_placement_area(
             self, level: int, start_x: int,
             start_y: int, end_x: int, end_y: int) -> bool:
         results = []
         for x in range(start_x, end_x + 1):
             for y in range(start_y, end_y + 1):
-                cell_available \
-                    = self.field_for_related_entity[level][x][y] == 0
+                cell_available = not self.is_a_related_entity(level, (x, y))
                 results.append(cell_available)
         return all(results)
 
-    def create_start_field_for_related_entity(self) -> Dict[int, Dict[int, Dict[int, int]]]:
-        start_field = {0: {}, 1: {}}
-        for x in range(self.field_size[0]):
-            start_field[0][x] = {}
-            if self.three_dimensional:
-                start_field[1][x] = {}
-            for y in range(self.field_size[1]):
-                start_field[0][x][y] = 0
-                if self.three_dimensional:
-                    start_field[1][x][y] = 0
-        return start_field
-
     def create_an_environment(self) -> None:
-        self.field_for_related_entity \
-            = self.create_start_field_for_related_entity()
         self.create_window()
 
         number_of_cells = self.field_size[0] * self.field_size[1]
@@ -294,9 +282,13 @@ class ArrangeTheShipsLogic:
             = ArrangeTheShipsWindow(self.field_size, self.three_dimensional)
         self.arrange_the_ships_window.establish_communication(
             self.processing_options_for_the_location_of_the_ship,
-            self.go_to_the_next_stage)
+            self.go_to_the_next_stage,
+            self.get_actual_field_related_entity)
         self.arrange_the_ships_window.setupUi()
         self.arrange_the_ships_window.show()
+
+    def get_actual_field_related_entity(self):
+        return self.field_for_related_entity
 
     def fill_stack_related_entity(
             self, data_about_number_of_related_entity: Dict[int, int]) -> None:

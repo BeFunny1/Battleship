@@ -88,6 +88,7 @@ class WindowCreateHelper:
             text, geometric_data = list(data_for_buttons[direction].items())[0]
             x, y, width, height = geometric_data[window]
             button = QtWidgets.QPushButton(central_widget)
+            button.setFocusPolicy(QtCore.Qt.NoFocus)
             button.setGeometry(QtCore.QRect(x, y, width, height))
             button.setObjectName(f'arrows_button_{direction}')
             button.setText(text)
@@ -131,18 +132,49 @@ class WindowCreateHelper:
             start_or_end = 0 if 'start' in key else 1
             labels_for_display_interval[key].setText(str(axis_interval[start_or_end]))
 
-    @staticmethod
     def show_area_field_button(
+            self, field_size: Tuple[int, int],
             first_field_button: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]],
             second_field_button: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]],
+            arranged_entity_first_field, arranged_entity_second_field,
             level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
         x_start, x_end = area[0]
         y_start, y_end = area[1]
-        for x in range(x_start, x_end + 1):
-            for y in range(y_start, y_end + 1):
+        for x in range(field_size[0]):
+            for y in range(field_size[1]):
+                point = x_start + x, y_start + y
                 first_field_button[level][x][y].show()
+                self.set_image_for_cell(
+                    button=first_field_button[level][x][y],
+                    level=level, point=point,
+                    used_cells=arranged_entity_first_field)
                 if second_field_button is not None:
                     second_field_button[level][x][y].show()
+                    enabled: bool = (level, point) not in arranged_entity_second_field
+                    second_field_button[level][x][y].setEnabled(enabled)
+                    self.set_image_for_cell(
+                        button=second_field_button[level][x][y],
+                        level=level, point=point,
+                        used_cells=arranged_entity_second_field)
+
+    @staticmethod
+    def set_image_for_cell(
+            button: QtWidgets.QPushButton,
+            level: int, point: Tuple[int, int], used_cells) -> None:
+        cell = (level, point)
+        if cell in used_cells:
+            if used_cells[cell] == '#':
+                button.setIcon(QtGui.QIcon('./images/hit.jpg'))
+                return None
+            type_of_vessel = 'ship' if level == 0 else 'submarine'
+            destroyed = True if used_cells[cell] == 0 else False
+            if destroyed:
+                path_to_image = f'./images/destroyed_{type_of_vessel}.jpg'
+            else:
+                path_to_image = f'./images/{type_of_vessel}.jpg'
+            button.setIcon(QtGui.QIcon(path_to_image))
+        else:
+            button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
 
     @staticmethod
     def create_unchanged_labels(
@@ -180,11 +212,14 @@ class WindowCreateHelper:
         return labels_first_lvl, labels_second_lvl
 
     def change_the_display_of_buttons(
-            self, first_field_button, second_field_button,
+            self, field_size, first_field_button, second_field_button,
+            arranged_entity_first_field, arranged_entity_second_field,
             current_level: int, interval_x: Tuple[int, int],
             interval_y: Tuple[int, int]) -> None:
         self.hide_all_field_button(first_field_button, second_field_button)
-        self.show_area_field_button(first_field_button, second_field_button,
+        self.show_area_field_button(field_size, first_field_button,
+                                    second_field_button,
+                                    arranged_entity_first_field, arranged_entity_second_field,
                                     current_level, (interval_x, interval_y))
 
     @staticmethod
@@ -242,11 +277,13 @@ class WindowCreateHelper:
                     central_widget, data_for_fields['submarine'], hide=True)
         return label_fields_first_level, label_fields_second_level
 
-    @staticmethod
     def create_field_buttons(
-            central_widget, field_size: Tuple[int, int], coordinate_grid: Tuple[List[int], List[int]],
-            three_dimensional: bool, make_button_active: bool, method_for_connect_clicked) \
-            -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
+            self, central_widget,
+            field_size: Tuple[int, int],
+            coordinate_grid: Tuple[List[int], List[int]],
+            three_dimensional: bool,
+            make_button_active: bool,
+            method_for_connect_clicked) -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = {0: {}, 1: {}}
         x_coordinate_grid, y_coordinate_grid \
@@ -256,34 +293,47 @@ class WindowCreateHelper:
             if three_dimensional:
                 field[1][x] = {}
             for y in range(field_size[1]):
-                button = QtWidgets.QPushButton(central_widget)
-                button.setEnabled(make_button_active)
                 x_coordinate, y_coordinate \
                     = x_coordinate_grid[x % 16], y_coordinate_grid[y % 16]
-                button.setGeometry(x_coordinate, y_coordinate, 20, 20)
-                button.setObjectName(f'button_field_{x}_{y}')
-                button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
-                if make_button_active:
-                    button.clicked.connect(
-                        partial(method_for_connect_clicked, 0, (x, y)))
-                field[0][x][y] = button
-                if x > 15 or y > 15:
-                    button.hide()
+                field[0][x][y] = self.create_button(
+                    level=0,
+                    central_widget=central_widget,
+                    coordinate_button_on_window=(x_coordinate, y_coordinate),
+                    position_button_on_field=(x, y),
+                    make_button_active=make_button_active,
+                    method_for_connect_clicked=method_for_connect_clicked)
                 if three_dimensional:
-                    sublevel_button \
-                        = QtWidgets.QPushButton(central_widget)
-                    sublevel_button\
-                        .setGeometry(x_coordinate, y_coordinate, 20, 20)
-                    sublevel_button\
-                        .setObjectName(f'sublevel_button_field_{x}_{y}')
-                    sublevel_button.setEnabled(make_button_active)
-                    sublevel_button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
-                    sublevel_button.hide()
-                    if make_button_active:
-                        sublevel_button.clicked.connect(
-                            partial(method_for_connect_clicked, 1, (x, y)))
-                    field[1][x][y] = sublevel_button
+                    field[1][x][y] = self.create_button(
+                        level=1,
+                        central_widget=central_widget,
+                        coordinate_button_on_window=(x_coordinate, y_coordinate),
+                        position_button_on_field=(x, y),
+                        make_button_active=make_button_active,
+                        method_for_connect_clicked=method_for_connect_clicked)
         return field
+
+    @staticmethod
+    def create_button(
+            central_widget,
+            level: int,
+            coordinate_button_on_window: Tuple[int, int],
+            position_button_on_field: Tuple[int, int],
+            make_button_active: bool,
+            method_for_connect_clicked) -> QtWidgets.QPushButton:
+        x_coordinate, y_coordinate = coordinate_button_on_window
+        x, y = position_button_on_field
+        button = QtWidgets.QPushButton(central_widget)
+        button.setGeometry(x_coordinate, y_coordinate, 20, 20)
+        button.setObjectName(f'sublevel_button_field_{x}_{y}')
+        button.setEnabled(make_button_active)
+        button.setFocusPolicy(QtCore.Qt.NoFocus)
+        button.setIcon(QtGui.QIcon('./images/white_background.jpg'))
+        if level == 1:
+            button.hide()
+        if make_button_active:
+            button.clicked.connect(
+                partial(method_for_connect_clicked, level, (x, y)))
+        return button
 
     @staticmethod
     def update_info_on_label(
@@ -308,6 +358,13 @@ class WindowCreateHelper:
             if three_dimensional:
                 second_text = str(data_second_lvl[key])
                 label_fields_second_level[translator_second_lvl[key]].setText(second_text)
+
+    @staticmethod
+    def calculate_size_visible_field(field_size: Tuple[int, int]) -> Tuple[int, int]:
+        if field_size[0] >= 16 or field_size[1] >= 16:
+            return 16, 16
+        else:
+            return field_size[0], field_size[1]
 
     @staticmethod
     def calculate_window_size(field_size: Tuple[int, int], two_field: bool) -> Tuple[int, int]:

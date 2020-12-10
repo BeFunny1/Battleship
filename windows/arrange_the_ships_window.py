@@ -40,10 +40,23 @@ class ArrangeTheShipsWindow(QMainWindow):
 
         self.customer = None
         self.exit_the_window = None
+        self.actual_info_about_related_entity = None
 
-    def establish_communication(self, customer, exit_the_window) -> None:
+    def establish_communication(
+            self, customer, exit_the_window,
+            actual_info_about_related_entity) -> None:
         self.customer = customer
         self.exit_the_window = exit_the_window
+        self.actual_info_about_related_entity = actual_info_about_related_entity
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        compliance_with_the_directions_and_code: Dict[str, str] \
+            = self.config_parser.read_config_file('arrow_direction_key')
+        key_code = str(event.key())
+        if key_code in compliance_with_the_directions_and_code.keys():
+            if self.field_size[0] > 16 and self.field_size[1] > 16:
+                direction: str = compliance_with_the_directions_and_code[key_code]
+                self.make_a_shift_in_the_field(direction)
 
     def setupUi(self) -> None:
         self.customize_window()
@@ -101,9 +114,14 @@ class ArrangeTheShipsWindow(QMainWindow):
 
     def show_area_field_button(
             self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
+        arranged_entity = self.actual_info_about_related_entity()
+        visible_field = self.calculate_size_visible_field()
         self.window_create_helper.show_area_field_button(
+            field_size=visible_field,
             first_field_button=self.field_button,
             second_field_button=None,
+            arranged_entity_first_field=arranged_entity,
+            arranged_entity_second_field=None,
             level=level, area=area)
 
     def update_info_on_label(
@@ -127,7 +145,9 @@ class ArrangeTheShipsWindow(QMainWindow):
         result = self.current_level == 0
         self.current_level = 1 if result else 0
 
-        self.change_the_display_of_buttons()
+        arranged_entity = self.actual_info_about_related_entity()
+        visible_field = self.calculate_size_visible_field()
+        self.change_the_display_of_buttons(visible_field, arranged_entity)
         self.change_the_display_labels(result)
 
     def change_the_display_labels(self, result: bool) -> None:
@@ -137,9 +157,11 @@ class ArrangeTheShipsWindow(QMainWindow):
             labels_first_lvl=self.labels_first_lvl,
             labels_second_lvl=self.labels_second_lvl, result=result)
 
-    def change_the_display_of_buttons(self) -> None:
+    def change_the_display_of_buttons(self, field_size, arranged_entity) -> None:
         self.window_create_helper.change_the_display_of_buttons(
-            first_field_button=self.field_button, second_field_button=None,
+            field_size=field_size, first_field_button=self.field_button,
+            second_field_button=None, arranged_entity_first_field=arranged_entity,
+            arranged_entity_second_field=None,
             current_level=self.current_level, interval_x=self.interval_x, interval_y=self.interval_y)
 
     def change_the_display_unchanged_labels(
@@ -153,12 +175,23 @@ class ArrangeTheShipsWindow(QMainWindow):
     def create_field_buttons(self) \
             -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         coordinate_grid = self.get_coordinate_grid()
+        visible_field: Tuple[int, int] = self.calculate_size_visible_field()
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = self.window_create_helper.create_field_buttons(
-              central_widget=self.central_widget, field_size=self.field_size,
+              central_widget=self.central_widget, field_size=visible_field,
               coordinate_grid=coordinate_grid, three_dimensional=self.three_dimensional,
-              make_button_active=True, method_for_connect_clicked=self.customer)
+              make_button_active=True, method_for_connect_clicked=self.field_button_cell_click_handler)
         return field
+
+    def calculate_size_visible_field(self) -> Tuple[int, int]:
+        return self.window_create_helper.calculate_size_visible_field(field_size=self.field_size)
+
+    def field_button_cell_click_handler(self, level: int, point: Tuple[int, int]) -> None:
+        point_on_field: Tuple[int, int] = self.determine_coordinates_point(point)
+        self.customer(level, point_on_field)
+
+    def determine_coordinates_point(self, point: Tuple[int, int]) -> Tuple[int, int]:
+        return self.interval_x[0] + point[0], self.interval_y[0] + point[1]
 
     def get_coordinate_grid(self) -> Tuple[List[int], List[int]]:
         x_coordinates = []
@@ -193,15 +226,28 @@ class ArrangeTheShipsWindow(QMainWindow):
         del_button.setGeometry(QtCore.QRect(410, 20, 81, 51))
         del_button.setObjectName("del_button")
         del_button.setText('DEL')
+        del_button.setFocusPolicy(QtCore.Qt.NoFocus)
         del_button.clicked.connect(self.del_button_event)
         return del_button
 
     def update_buttons_text(
             self, level: int, x: int, y: int, text: str) -> None:
-        if text == '':
-            self.field_button[level][x][y].setIcon(QtGui.QIcon('./images/white_background.jpg'))
-        else:
-            self.field_button[level][x][y].setIcon(QtGui.QIcon('./images/ship.jpg'))
+        if self.interval_x[0] <= x <= self.interval_x[1] and self.interval_y[0] <= y <= self.interval_y[1]:
+            x, y = self.normalize_coordinates((x, y))
+            if text == '':
+                self.field_button[level][x][y].setIcon(QtGui.QIcon('./images/white_background.jpg'))
+            else:
+                type_of_vessel = 'ship' if level == 0 else 'submarine'
+                self.field_button[level][x][y].setIcon(QtGui.QIcon(f'./images/{type_of_vessel}.jpg'))
+
+    def normalize_coordinates(self, point: Tuple[int, int]):
+        x, y = point
+        field_size = self.calculate_size_visible_field()
+        if point[0] >= field_size[0]:
+            x = point[0] - self.interval_x[0]
+        if point[1] >= field_size[1]:
+            y = point[1] - self.interval_y[0]
+        return x, y
 
     def del_button_event(self) -> None:
         reverse_phrases = {

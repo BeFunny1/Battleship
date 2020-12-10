@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Dict, List, Tuple
 
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -17,6 +16,7 @@ class GameWindow(QMainWindow):
         self.three_dimensional = three_dimensional
 
         self.player_shot_handler = None
+        self.actual_info_about_activity_on_fields = None
 
         self.player_buttons: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = None
         self.enemy_buttons: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] = None
@@ -42,6 +42,15 @@ class GameWindow(QMainWindow):
         self.central_widget = QtWidgets.QWidget(self)
         self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        compliance_with_the_directions_and_code: Dict[str, str] \
+            = self.config_parser.read_config_file('arrow_direction_key')
+        key_code = str(event.key())
+        if key_code in compliance_with_the_directions_and_code.keys():
+            if self.one_field_size[0] > 16 and self.one_field_size[1] > 16:
+                direction: str = compliance_with_the_directions_and_code[key_code]
+                self.make_a_shift_in_the_field(direction)
 
     def setupUi(self) -> None:
         self.customize_window()
@@ -90,13 +99,19 @@ class GameWindow(QMainWindow):
 
     def hide_all_field_button(self) -> None:
         self.window_create_helper.hide_all_field_button(
-            first_field_button=self.player_buttons, second_field_button=self.enemy_buttons)
+            first_field_button=self.player_buttons,
+            second_field_button=self.enemy_buttons)
 
     def show_area_field_button(
             self, level: int, area: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
+        activity_on_player_field, activity_on_enemy_field = self.actual_info_about_activity_on_fields()
+        visible_field = self.calculate_size_visible_field()
         self.window_create_helper.show_area_field_button(
+            field_size=visible_field,
             first_field_button=self.player_buttons,
             second_field_button=self.enemy_buttons,
+            arranged_entity_first_field=activity_on_player_field,
+            arranged_entity_second_field=activity_on_enemy_field,
             level=level, area=area)
 
     def create_label_with_info_about_the_course_of_the_game(self) -> QtWidgets.QLabel:
@@ -146,9 +161,12 @@ class GameWindow(QMainWindow):
         for ship in ships:
             level = ship.level
             for position in ship.position:
-                x = position[0]
-                y = position[1]
-                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/ship.jpg'))
+                x, y = position
+                if self.interval_x[0] <= x <= self.interval_x[1] and self.interval_y[0] <= y <= self.interval_y[1]:
+                    if level == 0:
+                        self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/ship.jpg'))
+                    else:
+                        self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/submarine.jpg'))
 
     def update_info_on_label(
             self, data_first_lvl: dict, data_second_lvl: dict) -> None:
@@ -197,7 +215,9 @@ class GameWindow(QMainWindow):
         result = self.current_level == 0
         self.current_level = 1 if result else 0
 
-        self.change_the_display_of_buttons()
+        arranged_entity = self.actual_info_about_activity_on_fields()
+        visible_field = self.calculate_size_visible_field()
+        self.change_the_display_of_buttons(visible_field, arranged_entity)
         self.change_the_display_labels(result)
 
     def change_the_display_labels(self, result: bool):
@@ -207,10 +227,12 @@ class GameWindow(QMainWindow):
             labels_first_lvl=self.labels_first_lvl,
             labels_second_lvl=self.labels_second_lvl, result=result)
 
-    def change_the_display_of_buttons(self) -> None:
+    def change_the_display_of_buttons(self, field_size, arranged_entity) -> None:
         self.window_create_helper.change_the_display_of_buttons(
-            first_field_button=self.player_buttons, second_field_button=self.enemy_buttons,
-            current_level=self.current_level, interval_x=self.interval_x, interval_y=self.interval_y)
+            field_size=field_size, first_field_button=self.player_buttons,
+            second_field_button=self.enemy_buttons, arranged_entity_first_field=arranged_entity[0],
+            arranged_entity_second_field=arranged_entity[1], current_level=self.current_level,
+            interval_x=self.interval_x, interval_y=self.interval_y)
 
     def change_the_display_changed_labels(
             self, data: Dict[str, QtWidgets.QLabel], show: bool) -> None:
@@ -228,15 +250,16 @@ class GameWindow(QMainWindow):
 
     def create_field_buttons_enemy(self) \
             -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
-        if self.one_field_size[0] > 15:
+        if self.one_field_size[0] >= 16:
             start_x_enemy = 40 + 20 * 16 + 50
         else:
             start_x_enemy = 40 + 20 * 10 + 50
         buttons = self.create_field_buttons(start_x_enemy, is_a_player=False)
         return buttons
 
-    def establish_connection(self, player_shot_handler) -> None:
+    def establish_connection(self, player_shot_handler, actual_info_about_activity_on_fields) -> None:
         self.player_shot_handler = player_shot_handler
+        self.actual_info_about_activity_on_fields = actual_info_about_activity_on_fields
 
     def update_labels_with_intervals(self) -> None:
         self.window_create_helper.update_labels_with_intervals(
@@ -255,29 +278,53 @@ class GameWindow(QMainWindow):
     def create_field_buttons(self, start_x: int, is_a_player: bool) \
             -> Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]]:
         coordinate_grid = self.get_coordinate_grid(start_x)
+        visible_field: Tuple[int, int] = self.calculate_size_visible_field()
         field: Dict[int, Dict[int, Dict[int, QtWidgets.QPushButton]]] \
             = self.window_create_helper.create_field_buttons(
-            central_widget=self.central_widget, field_size=self.one_field_size,
-            coordinate_grid=coordinate_grid, three_dimensional=self.three_dimensional,
-            make_button_active=not is_a_player, method_for_connect_clicked=self.player_shot_handler)
+            central_widget=self.central_widget,
+            field_size=visible_field,
+            coordinate_grid=coordinate_grid,
+            three_dimensional=self.three_dimensional,
+            make_button_active=not is_a_player,
+            method_for_connect_clicked=self.field_button_cell_click_handler)
         return field
 
+    def field_button_cell_click_handler(self, level: int, point: Tuple[int, int]) -> None:
+        point_on_field: Tuple[int, int] = self.determine_coordinates_point(point)
+        self.player_shot_handler(level, point_on_field)
+
+    def determine_coordinates_point(self, point: Tuple[int, int]) -> Tuple[int, int]:
+        return self.interval_x[0] + point[0], self.interval_y[0] + point[1]
+
+    def calculate_size_visible_field(self) -> Tuple[int, int]:
+        return self.window_create_helper.calculate_size_visible_field(field_size=self.one_field_size)
+
     def display_a_hit(
-            self, unit: str, level: int, point: (int, int), fluf: bool) -> None:
-        if unit == 'enemy':
-            x, y = point
-            if fluf:
-                self.enemy_buttons[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
+            self, unit: str, level: int, point: Tuple[int, int], fluff: bool) -> None:
+        x, y = point
+        if self.interval_x[0] <= x <= self.interval_x[1] and self.interval_y[0] <= y <= self.interval_y[1]:
+            if unit == 'enemy':
+                buttons = self.enemy_buttons
             else:
-                self.enemy_buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
-            self.enemy_buttons[level][x][y].setEnabled(False)
-        else:
-            x, y = point
-            if fluf:
-                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
+                buttons = self.player_buttons
+            x, y = self.normalize_coordinates((x, y))
+            if fluff:
+                buttons[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
             else:
-                self.player_buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
-            self.player_buttons[level][x][y].setEnabled(False)
+                if level == 0:
+                    buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_ship.jpg'))
+                else:
+                    buttons[level][x][y].setIcon(QtGui.QIcon('./images/destroyed_submarine.jpg'))
+            buttons[level][x][y].setEnabled(False)
+
+    def normalize_coordinates(self, point: Tuple[int, int]):
+        x, y = point
+        field_size = self.calculate_size_visible_field()
+        if point[0] >= field_size[0]:
+            x = point[0] - self.interval_x[0]
+        if point[1] >= field_size[1]:
+            y = point[1] - self.interval_y[0]
+        return x, y
 
     def display_the_destruction(self, unit: str, level: int, ship: [], ai_level: str) -> None:
         opposite_parties = {
@@ -300,7 +347,7 @@ class GameWindow(QMainWindow):
                     field[level][x][y].setIcon(QtGui.QIcon('./images/hit.jpg'))
                     field[level][x][y].setEnabled(False)
         for point in ship:
-            self.display_a_hit(unit, level, point, fluf=False)
+            self.display_a_hit(unit, level, point, fluff=False)
 
     def customize_window(self):
         window_size = self.calculate_window_size()
